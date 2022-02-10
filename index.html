@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Parcel Sandbox</title>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      id="viewport"
+      content="height=device-height, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <link rel="stylesheet" href="./src/LayerScrollStyles.css" />
+    <link rel="stylesheet" href="./exampleStyles.css" />
+  </head>
+
+  <body>
+    <div class="LayerScroll-background-container">
+      <div
+        class="LayerScroll-background"
+        data-background-depth="-50"
+        data-image-url="/img/rockBackground.png"
+        data-image-scale="0.1"
+      >
+        &nbsp;
+      </div>
+      <div
+        class="LayerScroll-background"
+        data-background-depth="-2"
+        data-image-url="/img/fenceBackground.png"
+        data-image-scale="0.1"
+      >
+        &nbsp;
+      </div>
+      <div
+        class="LayerScroll-background"
+        data-background-depth="2"
+        data-image-url="/img/vineBackground.png"
+        data-image-scale="1"
+      >
+        &nbsp;
+      </div>
+    </div>
+    <div id="main_content">
+      <h1>- LayerScroll -</h1>
+      <h2>- What is LayerScroll?</h2>
+      <p>
+        LayerScroll is a tool for creating web pages with multi-layered
+        backgrounds at multiple depths, creating an effect reminiscent of the 3d
+        parallax backgrounds featured in many video games from the 16-bit era.
+      </p>
+      <div class="big_divider">&nbsp;</div>
+      <h2>- Why does LayerScroll exist? -</h2>
+      <p>
+        A handful of parallax scroll web page frameworks are already available,
+        such as
+        <a
+          href="http://markdalgleish.com/2012/10/mobile-parallax-with-stellar-js/"
+          >stellar</a
+        >
+        and <a href="https://iprodev.github.io/Scrollax.js/">Scrollax</a>.
+        However, these tools are designed to add individual parallax scrolling
+        images at different points on a web page, and each of these images has
+        only a single layer of depth.
+      </p>
+      <p>
+        LayerScroll, on the other hand, layers multiple parallax scrolling
+        images atop one another and tiles them through the entire page. Where
+        the aforementioned parallax scroll tools add a single image that appears
+        to be at a slightly different depth from the web page's content,
+        LayerScroll adds a multi-layered background-foreground combination that
+        can make the web page appear to exist in a three-dimensional world.
+      </p>
+      <p>
+        LayerScroll is a set of HTML/CSS/Javascript template files, so using it
+        is just a matter of copying these files to your web page's root
+        directory and modifying the HTML to suit your needs.
+      </p>
+      <div class="big_divider">&nbsp;</div>
+      <h2>- Features -</h2>
+      <ul>
+        <li>Unlimited number of background layers</li>
+        <li>
+          Layers scroll at different speeds relative to a page's content to
+          create an illusion of depth
+        </li>
+        <li>
+          Layers can appear both in front of (or closer to the viewer than) and
+          behind (further from the viewer than) the page's main content.
+        </li>
+        <li>
+          Use is as simple as making a few quick modifications and additions to
+          a boilerplate HTML template file.
+        </li>
+      </ul>
+    </div>
+    <script src="src/LayerScroll.js"></script>
+  </body>
+</html>

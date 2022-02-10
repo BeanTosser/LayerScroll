@@ -1,0 +1,16 @@
+#main_content {
+  margin: 0 28vw;
+  margin-top: 0;
+  color: rgb(234, 254, 164);
+  font-size: 14pt;
+  font-weight: bold;
+}
+
+h1,
+h2 {
+  text-align: center;
+}
+
+.big_divider {
+  height: 250px;
+}
