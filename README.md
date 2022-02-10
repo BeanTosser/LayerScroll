@@ -1,22 +1,23 @@
-#Description
-##What is LayerScroll?
+# Description
+## What is LayerScroll?
 LayerScroll is a tool for creating web pages with multi-layered backgrounds at multiple depths, creating an effect reminiscent of the 3d parallax backgrounds featured in many video games from the 16-bit era.
 
-##Why does LayerScroll exist?
+## Why does LayerScroll exist?
 A handful of parallax scroll web page frameworks are already available, such as [stellar](http://markdalgleish.com/2012/10/mobile-parallax-with-stellar-js/) and [scrollax](https://iprodev.github.io/Scrollax.js/). However, these tools are designed to add individual parallax scrolling images at different points on a web page, and each of these images has only a single layer of depth.
 
 LayerScroll, on the other hand, layers multiple parallax scrolling images atop one another and tiles them through the entire page. Where the aforementioned parallax scroll tools add a single image that appears to be at a slightly different depth from the web page's content, LayerScroll adds a multi-layered background-foreground combination that can make the web page appear to exist in a three-dimensional world.
 
 LayerScroll is a set of HTML/CSS/Javascript template files, so using it is just a matter of copying these files to your web page's root directory and modifying the HTML to suit your needs.
 
-##Features
+## Features
 
 - Unlimited number of background layers
 - Layers scroll at different speeds relative to a page's content to create an illusion of depth
 - Layers can appear both in front of (or closer to the viewer than) and behind (further from the viewer than) the page's main content.
 - Use is as simple as making a few quick modifications and additions to a boilerplate HTML template file.
 
-#Usage
+# Usage
+## Limitations
 LayerScroll has a few limitations to note, particularly when porting it to an existing webpage:
 
 - Setting the z-index property of any elements in the page's main content section may interfere with LayerScroll.
@@ -25,6 +26,7 @@ LayerScroll has a few limitations to note, particularly when porting it to an ex
 - For best results, background images should either be seamlessly tiled or large enough fill the entire web page. The former is recommended due to the much smaller file sizes of tiled background images.
 - Background images should use transparency/alpha channels - otherwise they will block out all backgrounds at a higher/deeper depth. The deepest - or furthest from the viewer - background is an exception to this rule.
 
+## Setup
 A web page must have the following boilerplate HTML in order to use LayerScroll:
 
 ```
@@ -43,21 +45,7 @@ A web page must have the following boilerplate HTML in order to use LayerScroll:
 </body>
 ```
 
-Add a "LayerScroll-background" element between the opening and closing "LayerScroll-background-container" tags.
-
-```
-      <div
-        class="LayerScroll-background"
-        id="background_id"
-        data-background-depth="0"
-        data-image-url="/path/to/background_image"
-        data-image-scale="1"
-      >
-        &nbsp;
-      </div>
-```
-
-###Instructions
+## Instructions
 
 1. Create a directory to hold your website.
 2. Copy the files in the "src" directory (LayerScroll.html, LayerScroll.js and LayerScrollStyles.css) to your new website directory.
