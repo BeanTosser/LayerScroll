@@ -1,0 +1,25 @@
+body,html {
+  height: 100vh;
+}
+html {
+	overflow: hidden;
+}
+body {
+	overflow-x: hidden;
+	/* perspective-origin: 49.6% 49.6%; */
+	perspective: 100px;
+}
+
+.parallax-layer-container{
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: none;
+  justify-content: center;
+}
+
+.parallax-layer{
+	image-rendering: pixelated;
+}
