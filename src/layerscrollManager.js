@@ -1,18 +1,37 @@
+/*
+3d objects (using perspective and translateZ) shifting out of place horizontally on window resize (but not in responsive view!)
+
+I am trying to produce a parallax effect by using the perspective and transform: translateZ css properties. 
+
+I have everything working with one exception - the further away from the screen (ie 0pz) depth I translateZ a div to, The more the div becomes horizontally offset from it's intended position.
+
+At first I Thought I was fixing this problem by adding seemingly arbitrary transform-origin tags to the divs, but I quickly realized the fix would only work for a given window size; if I changed the window size, the div would shift again.
+
+However, if i open the developer tools panel and switch to responsive view, this no longer ahppens! the div is correctly placed regardless of the window size.
+
+I suspect this has something to do with the scroll bar, which obviously isn't present in the responsive view.
+
+Is there any way around this problem?
+*/
+
 // The "perspective" css property; it must be used to calculate how layers should scale to correct for their depths
-const perspectiveValue = 100;
+const perspectiveValue = 1;
 
-const addParallaxLayer = function(parallaxLayerConfig){//image, position, height, depth, imageScale
+const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, position, height, depth, imageScale, use3dTop, use3dBottom
 
-  // First, create the container div
-  const containerDiv = document.createElement("div");
-  containerDiv.className = "parallax-layer-container";
+  //TODO: sanity check inputs
   
   // Next, create the actual visible layer
-  let newLayer = document.createElement("div");
-  newLayer.className="parallax-layer";
-  if(!parallaxLayerConfig.image){
-    throw new Error("layerscroll layers MUST have a background image!");
+  let newLayer; 
+  if(parallaxLayerConfig.image){
+    newLayer = makeImageLayer(parallaxLayerConfig.image, parallaxLayerConfig.imageScale);
+  } else if (parallaxLayerConfig.element){
+    newLayer = parallaxLayerConfig.element;
+  } else {
+    throw("parallaxLayerConfig must contain a either an image or HTML element");
   }
+
+  newLayer.className="parallax-layer";
   
   // Set all properties accordingly
   
@@ -28,26 +47,80 @@ const addParallaxLayer = function(parallaxLayerConfig){//image, position, height
    * a depth of _100px_ has the inverse effect - a layer twice as far from the viewer as the screen.
    */
   
-  newLayer.style.backgroundImage = "url(" + parallaxLayerConfig.image + ")";
   newLayer.className = "parallax-layer";
-  newLayer.style.transform = "translateY(" + (parallaxLayerConfig.position || 0) + "px)";
+  newLayer.style.top = (parallaxLayerConfig.position || 0) + "px";
+  //newLayer.style.transform = "translateY(" + (parallaxLayerConfig.position || 0) + "px)";
   
   // The height needs to be adjusted to account for the movement of the layer relative to the website content 
-  //let newHeight = 
+  let newHeight;
+  if(parallaxLayerConfig.depth && parallaxLayerConfig !== "0"){
+    newHeight = 1 / parallaxLayerConfig.depth * parallaxLayerConfig.height;
+  } else {
+    newHeight = parallaxLayerConfig.height;
+  }
   
-  newLayer.style.height = (parallaxLayerConfig.height || document.documentElement.clientHeight) + "px";
+  console.log("newHeight: " + newHeight);
+
+  newLayer.style.height = newHeight + "px";
   newLayer.style.width = "100vw";
+  
+  let depth;
+  //=IF(A10<0,100*(A10+1),100-100/(A10+1))
+  if(parallaxLayerConfig.depth < 1) {
+    depth = perspectiveValue * (1-parallaxLayerConfig.depth);
+  } else {
+    depth = perspectiveValue*(-(parallaxLayerConfig.depth-1));
+  }
+  console.log("Converted depth: " + depth);
+  let transformScale = 1 + (-depth / perspectiveValue);
+  newLayer.style.transform = "translateZ(" + depth + "px) scale(" + transformScale + ")";
+  
+  // Assign an appropriate z-index to the layer so that it will appear in front of and/or behind other layers logically
+  console.log("Depth: " + depth);
+  if(parallaxLayerConfig.depth < 1){
+    newLayer.style.zIndex = -Math.round(1/depth);
+  } else {
+    newLayer.style.zIndex = Math.round(depth - 1)
+  }
+  console.log("Adjusted zIndex: " + newLayer.style.zIndex);
+  
+  // ... and add the container to the page
+  document.body.appendChild(newLayer);   
+  
+  // Rotate copies of the layer 90 degrees and place them even with the top and bottom of this layer to add additional sense of depth
+  if(parallaxLayerConfig.use3dTop){
+    make3dLayer(newLayer, transformScale, depth, true);
+  }
+  if(parallaxLayerConfig.use3dBottom){
+    make3dLayer(newLayer, transformScale, depth, false);
+  }
+}
+
+const make3dLayer = function(layer, scale, depth, isTop){
+  let new3dLayer = layer.cloneNode(true);
+  new3dLayer.style.width = "1000vw";
+  new3dLayer.style.left = "-500vw";
+  let rotationDirection = -1;
+  if(isTop){
+    //Rotate about the top edge of the layer
+    new3dLayer.style.transformOrigin = "50% 0% " + depth + "px";
+  } else {
+    // Rotate about the bottom edge of the layer
+    new3dLayer.style.transformOrigin = "50% 100% " + depth + "px";
+    rotationDirection = 1;
+  }
+  //I'm not sure why a rotateX value of 1 degree actually results in a 90 degree rotation, but such is in fact the case
+  new3dLayer.style.transform = "translateZ(" + depth + "px) scale(" + scale + ") rotateX(" + rotationDirection + "deg)";
+  document.body.appendChild(new3dLayer);
+}
+
+const makeImageLayer = function(background, imageScale){
+    newLayer = document.createElement("div"); 
   //Make sure the layer is visible
   newLayer.innerHTML = "&nbsp;";
-  newLayer.style.backgroundSize = (parallaxLayerConfig.imageScale || 1) * 100 + "vw";
-  let depth = parallaxLayerConfig.depth || 0;
-  let transformScale = 1 + (-depth / perspectiveValue);
-  containerDiv.style.transform = "translateZ(" + depth + "px) scale(" + transformScale + ")";
-  // Prevent the top and left sides from "pulling away" from the top and left of the page
-  containerDiv.style.zIndex = depth || 1;
-  
-  // Nest the visible layer in its container...
-  containerDiv.appendChild(newLayer);
-  // ... and add the container to the page
-  document.body.appendChild(containerDiv);   
+  //Apply the image
+  newLayer.style.backgroundImage = "url(" + background + ")";
+  //Scale the background
+  newLayer.style.backgroundSize = (imageScale || 1) * 100 + "vw";
+  return newLayer;
 }
