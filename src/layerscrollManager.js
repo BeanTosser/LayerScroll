@@ -1,3 +1,5 @@
+//TODO see if geting rid of scale will fix 3d problems
+
 /*
 3d objects (using perspective and translateZ) shifting out of place horizontally on window resize (but not in responsive view!)
 
@@ -17,10 +19,12 @@ Is there any way around this problem?
 // The "perspective" css property; it must be used to calculate how layers should scale to correct for their depths
 const perspectiveValue = 1;
 
-const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, position, height, depth, imageScale, use3dTop, use3dBottom
+const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, position, height, depth, imageScale, use3dTop, use3dBottom, zIndex
 
   //TODO: sanity check inputs
-  
+  if(!parallaxLayerConfig.zIndex){
+	throw new Error("zIndex is a required parameter for addImageParallaxLayer()!");
+  }
   // Next, create the actual visible layer
   let newLayer; 
   if(parallaxLayerConfig.image){
@@ -76,12 +80,7 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
   newLayer.style.transform = "translateZ(" + depth + "px) scale(" + transformScale + ")";
   
   // Assign an appropriate z-index to the layer so that it will appear in front of and/or behind other layers logically
-  console.log("Depth: " + depth);
-  if(parallaxLayerConfig.depth < 1){
-    newLayer.style.zIndex = -Math.round(1/depth);
-  } else {
-    newLayer.style.zIndex = Math.round(depth - 1)
-  }
+  newLayer.style.zIndex = parallaxLayerConfig.zIndex;
   console.log("Adjusted zIndex: " + newLayer.style.zIndex);
   
   // ... and add the container to the page
@@ -89,24 +88,27 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
   
   // Rotate copies of the layer 90 degrees and place them even with the top and bottom of this layer to add additional sense of depth
   if(parallaxLayerConfig.use3dTop){
-    make3dLayer(newLayer, transformScale, depth, true);
+    make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, newHeight, true);
   }
   if(parallaxLayerConfig.use3dBottom){
-    make3dLayer(newLayer, transformScale, depth, false);
+    make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, newHeight, false);
   }
 }
 
-const make3dLayer = function(layer, scale, depth, isTop){
+const make3dLayer = function(layer, scale, depth, position, height, isTop){
   let new3dLayer = layer.cloneNode(true);
   new3dLayer.style.width = "1000vw";
   new3dLayer.style.left = "-500vw";
+  new3dLayer.style.zIndex = layer.style.zIndex - 1;
   let rotationDirection = -1;
   if(isTop){
     //Rotate about the top edge of the layer
     new3dLayer.style.transformOrigin = "50% 0% " + depth + "px";
+  new3dLayer.style.top = (position + height/2) + "px";
   } else {
     // Rotate about the bottom edge of the layer
     new3dLayer.style.transformOrigin = "50% 100% " + depth + "px";
+  new3dLayer.style.top = (height / 2) + "px";
     rotationDirection = 1;
   }
   //I'm not sure why a rotateX value of 1 degree actually results in a 90 degree rotation, but such is in fact the case
