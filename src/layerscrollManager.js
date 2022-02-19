@@ -1,26 +1,25 @@
-/*
-3d objects (using perspective and translateZ) shifting out of place horizontally on window resize (but not in responsive view!)
+let perspectiveValue = getComputedStyle(document.documentElement).getPropertyValue("--perspective-value");
+perspectiveValue = parseInt(perspectiveValue.slice(0,perspectiveValue.length-2));
 
-I am trying to produce a parallax effect by using the perspective and transform: translateZ css properties. 
+const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, position, height, depth, imageScale, use3dTop, use3dBottom, zIndex
 
-I have everything working with one exception - the further away from the screen (ie 0pz) depth I translateZ a div to, The more the div becomes horizontally offset from it's intended position.
-
-At first I Thought I was fixing this problem by adding seemingly arbitrary transform-origin tags to the divs, but I quickly realized the fix would only work for a given window size; if I changed the window size, the div would shift again.
-
-However, if i open the developer tools panel and switch to responsive view, this no longer ahppens! the div is correctly placed regardless of the window size.
-
-I suspect this has something to do with the scroll bar, which obviously isn't present in the responsive view.
-
-Is there any way around this problem?
-*/
-
-// The "perspective" css property; it must be used to calculate how layers should scale to correct for their depths
-const perspectiveValue = 1;
-
-const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, position, height, depth, imageScale, use3dTop, use3dBottom
+  //For debugging: draw horizontal lines where the top and bottom of the layer should be
+  let hr1 = document.createElement("hr");
+  hr1.style.top = parallaxLayerConfig.position + "vw";
+  hr1.style.color = "green";
+  hr1.style.position = "absolute";
+  hr1.style.width = "100%";
+  hr1.style.margin = 0;
+  let hr2 = hr1.cloneNode(false);
+  hr2.style.top = parallaxLayerConfig.position + parallaxLayerConfig.height + "vw";
+  hr2.style.color = "red";
+  document.body.appendChild(hr1);
+  document.body.appendChild(hr2);
 
   //TODO: sanity check inputs
-  
+  if(!parallaxLayerConfig.zIndex){
+  throw new Error("zIndex is a required parameter for addImageParallaxLayer()!");
+  }
   // Next, create the actual visible layer
   let newLayer; 
   if(parallaxLayerConfig.image){
@@ -48,12 +47,11 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
    */
   
   newLayer.className = "parallax-layer";
-  newLayer.style.top = (parallaxLayerConfig.position || 0) + "px";
   //newLayer.style.transform = "translateY(" + (parallaxLayerConfig.position || 0) + "px)";
   
   // The height needs to be adjusted to account for the movement of the layer relative to the website content 
   let newHeight;
-  if(parallaxLayerConfig.depth && parallaxLayerConfig !== "0"){
+  if(parallaxLayerConfig.depth && parallaxLayerConfig.depth !== 1){
     newHeight = 1 / parallaxLayerConfig.depth * parallaxLayerConfig.height;
   } else {
     newHeight = parallaxLayerConfig.height;
@@ -61,8 +59,9 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
   
   console.log("newHeight: " + newHeight);
 
-  newLayer.style.height = newHeight + "px";
+  newLayer.style.height = newHeight + "vw";
   newLayer.style.width = "100vw";
+  newLayer.style.transformOrigin = "top";
   
   let depth;
   //=IF(A10<0,100*(A10+1),100-100/(A10+1))
@@ -72,45 +71,91 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
     depth = perspectiveValue*(-(parallaxLayerConfig.depth-1));
   }
   console.log("Converted depth: " + depth);
-  let transformScale = 1 + (-depth / perspectiveValue);
-  newLayer.style.transform = "translateZ(" + depth + "px) scale(" + transformScale + ")";
+  let transformScale;
+  if(depth != 0) {
+    transformScale = 1 + (-depth / perspectiveValue);
+  } else {
+    transformScale = 1;
+  }
+  console.log("transformScale: " + transformScale);
+  let newPosition;
+  if(parallaxLayerConfig.position){
+    newLayer.style.top = parallaxLayerConfig.position + "vw";
+  } else {
+    newLayer.style.top - "0vw";
+  }
+  newLayer.style.top = (parallaxLayerConfig.position || 0) + "vw";
+  
+  newLayer.style.transform = "translateZ(" + depth + "vw) scale(" + transformScale + ")";
   
   // Assign an appropriate z-index to the layer so that it will appear in front of and/or behind other layers logically
-  console.log("Depth: " + depth);
-  if(parallaxLayerConfig.depth < 1){
-    newLayer.style.zIndex = -Math.round(1/depth);
-  } else {
-    newLayer.style.zIndex = Math.round(depth - 1)
-  }
+  newLayer.style.zIndex = parallaxLayerConfig.zIndex;
   console.log("Adjusted zIndex: " + newLayer.style.zIndex);
   
   // ... and add the container to the page
   document.body.appendChild(newLayer);   
-  
+
+  /* 
+   * !!! NOTE !!!
+   *
+   * "3D" layers are experimental and don't work well at the moment. They render slowly and poorly at desktop resolutions
+   * and suffer from depth-related texture distortion.
+   */
   // Rotate copies of the layer 90 degrees and place them even with the top and bottom of this layer to add additional sense of depth
   if(parallaxLayerConfig.use3dTop){
-    make3dLayer(newLayer, transformScale, depth, true);
+    make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, parallaxLayerConfig.height, newHeight, true);
   }
   if(parallaxLayerConfig.use3dBottom){
-    make3dLayer(newLayer, transformScale, depth, false);
+    make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, parallaxLayerConfig.height, newHeight, false);
   }
+
 }
 
-const make3dLayer = function(layer, scale, depth, isTop){
+// NOTE: not recommended for use with short (<100vh) layers. Top and bottom layers can have occlusion issues.
+// There is no way around this (at least as far as I know at this point)
+const make3dLayer = function(layer, scale, depth, position, initialHeight, depthAdjustedHeight, isTop){
   let new3dLayer = layer.cloneNode(true);
-  new3dLayer.style.width = "1000vw";
-  new3dLayer.style.left = "-500vw";
-  let rotationDirection = -1;
-  if(isTop){
-    //Rotate about the top edge of the layer
-    new3dLayer.style.transformOrigin = "50% 0% " + depth + "px";
+  new3dLayer.style.zIndex = layer.style.zIndex - 1;
+
+  /* 
+   * Stretch the layer's height to make it recede far into the background (because it is rotated, 
+   * the layer's height is actually depth along the z-axis')
+   */
+  let adjustedHeight = 1000;
+  //stretch the layer's width so that the edges don't recede from the sides of the window in the distance
+  let adjustedWidth = 1000;
+
+  new3dLayer.style.height = adjustedHeight + "vw";
+  new3dLayer.style.width = adjustedWidth + "vw";
+  // Shift the   ...
+  
+  /*
+   * Setting the horizontal transform origin to "center" simplifies the math for placing the new 3d layer horizontally.
+   * Now we can just move the new layer left by half its width to center it 
+   */
+  new3dLayer.style.transformOrigin = "center top";
+  
+  let leftDisplacement;
+  if(depth < 0){
+    leftDisplacement = -adjustedWidth / 2 / scale - 50;
+  } else if(depth > 0) {
+    leftDisplacement = -adjustedWidth / 2 * scale - 50;
   } else {
-    // Rotate about the bottom edge of the layer
-    new3dLayer.style.transformOrigin = "50% 100% " + depth + "px";
-    rotationDirection = 1;
+    leftDisplacement = -adjustedWidth / 2 + 50;
   }
-  //I'm not sure why a rotateX value of 1 degree actually results in a 90 degree rotation, but such is in fact the case
-  new3dLayer.style.transform = "translateZ(" + depth + "px) scale(" + scale + ") rotateX(" + rotationDirection + "deg)";
+  new3dLayer.style.left = leftDisplacement + "vw";
+ 
+  if(isTop){
+    new3dLayer.style.top = position + "vw";
+  } else {
+    new3dLayer.style.top = position + initialHeight + "vw";
+    // Get the difference between the width of the source layer (which also happens to be the width of the screen ie 100vw) and tis layer
+    let widthDifference = adjustedWidth - 100;
+    
+    //new3dLayer.style.left = 
+}
+  //new3dLayer.style.width = newWidth + "vw";
+  new3dLayer.style.transform = "translateZ(" + (-adjustedHeight + depth) + "vw) scale(" + scale + ") rotateX(" + 90 + "deg)";
   document.body.appendChild(new3dLayer);
 }
 
