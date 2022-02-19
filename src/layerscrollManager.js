@@ -85,7 +85,8 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
   
   // ... and add the container to the page
   document.body.appendChild(newLayer);   
-  
+  /*
+  // Broken!
   // Rotate copies of the layer 90 degrees and place them even with the top and bottom of this layer to add additional sense of depth
   if(parallaxLayerConfig.use3dTop){
     make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, newHeight, true);
@@ -93,18 +94,19 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
   if(parallaxLayerConfig.use3dBottom){
     make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, newHeight, false);
   }
+  */
 }
 
+/* 
+ //Broken! don't use for now.
 const make3dLayer = function(layer, scale, depth, position, height, isTop){
   let new3dLayer = layer.cloneNode(true);
-  new3dLayer.style.width = "1000vw";
-  new3dLayer.style.left = "-500vw";
   new3dLayer.style.zIndex = layer.style.zIndex - 1;
   let rotationDirection = -1;
   if(isTop){
     //Rotate about the top edge of the layer
     new3dLayer.style.transformOrigin = "50% 0% " + depth + "px";
-  new3dLayer.style.top = (position + height/2) + "px";
+  new3dLayer.style.top = (position + height + height / position * height) + "px";
   } else {
     // Rotate about the bottom edge of the layer
     new3dLayer.style.transformOrigin = "50% 100% " + depth + "px";
@@ -112,9 +114,10 @@ const make3dLayer = function(layer, scale, depth, position, height, isTop){
     rotationDirection = 1;
   }
   //I'm not sure why a rotateX value of 1 degree actually results in a 90 degree rotation, but such is in fact the case
-  new3dLayer.style.transform = "translateZ(" + depth + "px) scale(" + scale + ") rotateX(" + rotationDirection + "deg)";
+  new3dLayer.style.transform = "translateZ(" + (depth+1) + "px) scale(" + scale + ") rotateX(" + (rotationDirection*90) + "deg)";
   document.body.appendChild(new3dLayer);
 }
+*/
 
 const makeImageLayer = function(background, imageScale){
     newLayer = document.createElement("div"); 
