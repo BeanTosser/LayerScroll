@@ -10,8 +10,8 @@ addImageParallaxLayer({
 
 addImageParallaxLayer({
   image: "images/rockBackground.jpg", //https://www.maxpixel.net/static/photo/1x/Texture-Background-Seamless-Stone-Rocks-1657467.jpg
-  position: 1840, 
-  height: 1000,
+  position: 75, 
+  height: 35,
   depth: 2,
   imageScale: 0.1,
   use3dTop: true,

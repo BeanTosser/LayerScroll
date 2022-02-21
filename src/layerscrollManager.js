@@ -16,12 +16,28 @@ I suspect this has something to do with the scroll bar, which obviously isn't pr
 Is there any way around this problem?
 */
 
-// The "perspective" css property; it must be used to calculate how layers should scale to correct for their depths
-const perspectiveValue = screen.width;
-// because the perspective is derived from the width, track any changes in its value
+/*
+ * Keep track of all layers and their transformScale values
+ *
+ * {layer, transformScale}
+ */
+const layers = [];
+
+let style = getComputedStyle(document.documentElement);
+let perspectiveValue = style.getPropertyValue("--perspective-value");
+perspectiveValue = parseInt(perspectiveValue.slice(0,perspectiveValue.length-2));
+console.log("Perspective: " + perspectiveValue);
+
 window.addEventListener("resize", () => {
-  perspectiveValue = window.innerWidth;
+  // Resizing the window distorts the size of the layer if its depth is not 0; thus, it is necessary to cancel and reapply the scane
+  // * NOTE this is not the most desireable solution by far, but at this point it is the only one I am aware of
+  //layers.forEach(layer){
+  //  layer.layer.style.transform += "scale(" + 1 + ") scale(" + layer.transformScale
+  //}
+  console.log("window.innerWidth: " + perspectiveValue);
+  console.log("screen.width: " + screen.width);
 })
+
 const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, position, height, depth, imageScale, use3dTop, use3dBottom, zIndex
 
   //TODO: sanity check inputs
@@ -55,12 +71,12 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
    */
   
   newLayer.className = "parallax-layer";
-  newLayer.style.top = (parallaxLayerConfig.position || 0) + "px";
+  newLayer.style.top = (parallaxLayerConfig.position || 0) + "vw";
   //newLayer.style.transform = "translateY(" + (parallaxLayerConfig.position || 0) + "px)";
   
   // The height needs to be adjusted to account for the movement of the layer relative to the website content 
   let newHeight;
-  if(parallaxLayerConfig.depth && parallaxLayerConfig !== "0"){
+  if(parallaxLayerConfig.depth && parallaxLayerConfig.depth !== 1){
     newHeight = 1 / parallaxLayerConfig.depth * parallaxLayerConfig.height;
   } else {
     newHeight = parallaxLayerConfig.height;
@@ -68,7 +84,7 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
   
   console.log("newHeight: " + newHeight);
 
-  newLayer.style.height = newHeight + "px";
+  newLayer.style.height = newHeight + "vw";
   newLayer.style.width = "100vw";
   
   let depth;
@@ -85,6 +101,8 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
   // Assign an appropriate z-index to the layer so that it will appear in front of and/or behind other layers logically
   newLayer.style.zIndex = parallaxLayerConfig.zIndex;
   console.log("Adjusted zIndex: " + newLayer.style.zIndex);
+  
+  layers.push({layer: newLayer, transformScale: transformScale});
   
   // ... and add the container to the page
   document.body.appendChild(newLayer);   
@@ -109,15 +127,16 @@ const make3dLayer = function(layer, scale, depth, position, height, isTop){
   if(isTop){
     //Rotate about the top edge of the layer
     new3dLayer.style.transformOrigin = "50% 0%";
-  new3dLayer.style.top = (position + (height * scale / 2)) + "px";
+    new3dLayer.style.top = (position) + "vw";
   } else {
     // Rotate about the bottom edge of the layer
     new3dLayer.style.transformOrigin = "50% 100%";
-  new3dLayer.style.top = (position - height * scale / 2) + "px";
+    new3dLayer.style.top = (position + height * scale) + "vw";
     rotationDirection = 1;
   }
   //I'm not sure why a rotateX value of 1 degree actually results in a 90 degree rotation, but such is in fact the case
   new3dLayer.style.transform = "translateZ(" + (depth+1) + "px) scale(" + scale + ") rotateX(" + (rotationDirection*90) + "deg)";
+  layers.push({layer: new3dLayer, transformScale: scale});
   document.body.appendChild(new3dLayer);
 }
 
