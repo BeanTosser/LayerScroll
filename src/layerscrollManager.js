@@ -30,7 +30,7 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
 
   //TODO: sanity check inputs
   if(!parallaxLayerConfig.zIndex){
-	throw new Error("zIndex is a required parameter for addImageParallaxLayer()!");
+  throw new Error("zIndex is a required parameter for addImageParallaxLayer()!");
   }
   // Next, create the actual visible layer
   let newLayer; 
@@ -86,7 +86,7 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
   console.log("transformScale: " + transformScale);
   let adjustedPosition;
   if(parallaxLayerConfig.position){
-    newLayer.style.top = (parallaxLayerConfig.position - (newHeight - (newHeight / transformScale))/2) + "vw";
+    newLayer.style.top = parallaxLayerConfig.position + "vw";
   } else {
     newLayer.style.top - "0vw";
   }
@@ -119,7 +119,6 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
 const make3dLayer = function(layer, scale, depth, position, height, isTop){
   let new3dLayer = layer.cloneNode(true);
   new3dLayer.style.zIndex = layer.style.zIndex - 1;
-  let rotationDirection = -1;
 
   // Stretch the layer's height to make it recede far into the background
   let adjustedHeight = 50;
@@ -127,22 +126,41 @@ const make3dLayer = function(layer, scale, depth, position, height, isTop){
   // Stretch the layer's width so that the edges don't recede from the window edges in the distance
   let newWidth = 300;
   */
-  if(isTop){
-    //Place at the top edge of the source layer
-    new3dLayer.style.top = (position - (height - (height / scale))) + "vw";
-  } else {
-    // Place at the bottom edge of the source layer
-    new3dLayer.style.top = position + "vw";
-    rotationDirection = 1;
-  }
 
   // convert height to px, because the depth depends on it and must be specified in absolute units!
   //let heightInPx = height * screen.width / 100;
   
   //new3dLayer.style.left = (-newWidth / 2) + "vw";
-  new3dLayer.style.height = height + "vw";
+  new3dLayer.style.height = height;
+  let rotationDirection = 1;
+
+/*
+  if(isTop){
+    new3dLayer.style.transformOrigin = "50% 0vw";
+    new3dLayer.style.top = (position - height / 2) + "vw";
+  } else {
+    new3dLayer.style.transformOrigin = "50% 100%";
+  new3dLayer.style.top = (position + height / 2) + "vw";
+    rotationDirection = -1;
+  }
+*/
+
+  /*
+   * because of the height adjustment for depth, the amount to add or subtract to/from the source layer's position to get
+   * the position of its top and bottom needs to be adjusted as well
+   */
+  let depthFactor = depth / perspectiveValue;
+
+  if(isTop){
+    new3dLayer.style.transformOrigin = "top";
+    new3dLayer.style.top = position + height / (2 / depthFactor) + "vw";
+  } else {
+    new3dLayer.style.transformOrigin = "bottom";
+  new3dLayer.style.top = position - height / (2 / depthFactor) + "vw";
+    rotationDirection = -1;
+}
   //new3dLayer.style.width = newWidth + "vw";
-  new3dLayer.style.transform = "scale(" + scale + ") rotateX(" + (rotationDirection*90) + "deg) translateZ(" + -height + "vw)";
+  new3dLayer.style.transform = "translateZ(" + (-height + depth) + "vw) scale(" + scale + ") rotateX(" + (rotationDirection*90) + "deg)";
   layers.push({layer: new3dLayer, transformScale: scale});
   document.body.appendChild(new3dLayer);
 }
