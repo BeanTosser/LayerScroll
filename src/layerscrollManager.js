@@ -1,5 +1,3 @@
-//TODO see if geting rid of scale will fix 3d problems
-
 /*
 3d objects (using perspective and translateZ) shifting out of place horizontally on window resize (but not in responsive view!)
 
@@ -27,16 +25,6 @@ let style = getComputedStyle(document.documentElement);
 let perspectiveValue = style.getPropertyValue("--perspective-value");
 perspectiveValue = parseInt(perspectiveValue.slice(0,perspectiveValue.length-2));
 console.log("Perspective: " + perspectiveValue);
-
-window.addEventListener("resize", () => {
-  // Resizing the window distorts the size of the layer if its depth is not 0; thus, it is necessary to cancel and reapply the scane
-  // * NOTE this is not the most desireable solution by far, but at this point it is the only one I am aware of
-  //layers.forEach(layer){
-  //  layer.layer.style.transform += "scale(" + 1 + ") scale(" + layer.transformScale
-  //}
-  console.log("window.innerWidth: " + perspectiveValue);
-  console.log("screen.width: " + screen.width);
-})
 
 const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, position, height, depth, imageScale, use3dTop, use3dBottom, zIndex
 
@@ -71,7 +59,6 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
    */
   
   newLayer.className = "parallax-layer";
-  newLayer.style.top = (parallaxLayerConfig.position || 0) + "vw";
   //newLayer.style.transform = "translateY(" + (parallaxLayerConfig.position || 0) + "px)";
   
   // The height needs to be adjusted to account for the movement of the layer relative to the website content 
@@ -96,7 +83,16 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
   }
   console.log("Converted depth: " + depth);
   let transformScale = 1 + (-depth / perspectiveValue);
-  newLayer.style.transform = "translateZ(" + depth + "px) scale(" + transformScale + ")";
+  console.log("transformScale: " + transformScale);
+  let adjustedPosition;
+  if(parallaxLayerConfig.position){
+    newLayer.style.top = (parallaxLayerConfig.position - (newHeight - (newHeight / transformScale))/2) + "vw";
+  } else {
+    newLayer.style.top - "0vw";
+  }
+  newLayer.style.top = (parallaxLayerConfig.position || 0) + "vw";
+  
+  newLayer.style.transform = "translateZ(" + depth + "vw) scale(" + transformScale + ")";
   
   // Assign an appropriate z-index to the layer so that it will appear in front of and/or behind other layers logically
   newLayer.style.zIndex = parallaxLayerConfig.zIndex;
@@ -118,24 +114,35 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
 
 }
 
-
- //Broken! don't use for now.
+// NOTE: not recommended for use with short (<100vh) layers. Top and bottom layers can have occlusion issues.
+// There is no way around this (at least as far as I know at this point)
 const make3dLayer = function(layer, scale, depth, position, height, isTop){
   let new3dLayer = layer.cloneNode(true);
   new3dLayer.style.zIndex = layer.style.zIndex - 1;
   let rotationDirection = -1;
+
+  // Stretch the layer's height to make it recede far into the background
+  let adjustedHeight = 50;
+  /*
+  // Stretch the layer's width so that the edges don't recede from the window edges in the distance
+  let newWidth = 300;
+  */
   if(isTop){
-    //Rotate about the top edge of the layer
-    new3dLayer.style.transformOrigin = "50% 0%";
-    new3dLayer.style.top = (position) + "vw";
+    //Place at the top edge of the source layer
+    new3dLayer.style.top = (position - (height - (height / scale))) + "vw";
   } else {
-    // Rotate about the bottom edge of the layer
-    new3dLayer.style.transformOrigin = "50% 100%";
-    new3dLayer.style.top = (position + height * scale) + "vw";
+    // Place at the bottom edge of the source layer
+    new3dLayer.style.top = position + "vw";
     rotationDirection = 1;
   }
-  //I'm not sure why a rotateX value of 1 degree actually results in a 90 degree rotation, but such is in fact the case
-  new3dLayer.style.transform = "translateZ(" + (depth+1) + "px) scale(" + scale + ") rotateX(" + (rotationDirection*90) + "deg)";
+
+  // convert height to px, because the depth depends on it and must be specified in absolute units!
+  //let heightInPx = height * screen.width / 100;
+  
+  //new3dLayer.style.left = (-newWidth / 2) + "vw";
+  new3dLayer.style.height = height + "vw";
+  //new3dLayer.style.width = newWidth + "vw";
+  new3dLayer.style.transform = "scale(" + scale + ") rotateX(" + (rotationDirection*90) + "deg) translateZ(" + -height + "vw)";
   layers.push({layer: new3dLayer, transformScale: scale});
   document.body.appendChild(new3dLayer);
 }
