@@ -1,32 +1,20 @@
-/*
-3d objects (using perspective and translateZ) shifting out of place horizontally on window resize (but not in responsive view!)
-
-I am trying to produce a parallax effect by using the perspective and transform: translateZ css properties. 
-
-I have everything working with one exception - the further away from the screen (ie 0pz) depth I translateZ a div to, The more the div becomes horizontally offset from it's intended position.
-
-At first I Thought I was fixing this problem by adding seemingly arbitrary transform-origin tags to the divs, but I quickly realized the fix would only work for a given window size; if I changed the window size, the div would shift again.
-
-However, if i open the developer tools panel and switch to responsive view, this no longer ahppens! the div is correctly placed regardless of the window size.
-
-I suspect this has something to do with the scroll bar, which obviously isn't present in the responsive view.
-
-Is there any way around this problem?
-*/
-
-/*
- * Keep track of all layers and their transformScale values
- *
- * {layer, transformScale}
- */
-const layers = [];
-
-let style = getComputedStyle(document.documentElement);
-let perspectiveValue = style.getPropertyValue("--perspective-value");
+let perspectiveValue = getComputedStyle(document.documentElement).getPropertyValue("--perspective-value");
 perspectiveValue = parseInt(perspectiveValue.slice(0,perspectiveValue.length-2));
-console.log("Perspective: " + perspectiveValue);
 
 const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, position, height, depth, imageScale, use3dTop, use3dBottom, zIndex
+
+  //For debugging: draw horizontal lines where the top and bottom of the layer should be
+  let hr1 = document.createElement("hr");
+  hr1.style.top = parallaxLayerConfig.position + "vw";
+  hr1.style.color = "green";
+  hr1.style.position = "absolute";
+  hr1.style.width = "100%";
+  hr1.style.margin = 0;
+  let hr2 = hr1.cloneNode(false);
+  hr2.style.top = parallaxLayerConfig.position + parallaxLayerConfig.height + "vw";
+  hr2.style.color = "red";
+  document.body.appendChild(hr1);
+  document.body.appendChild(hr2);
 
   //TODO: sanity check inputs
   if(!parallaxLayerConfig.zIndex){
@@ -73,6 +61,7 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
 
   newLayer.style.height = newHeight + "vw";
   newLayer.style.width = "100vw";
+  newLayer.style.transformOrigin = "top";
   
   let depth;
   //=IF(A10<0,100*(A10+1),100-100/(A10+1))
@@ -84,7 +73,7 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
   console.log("Converted depth: " + depth);
   let transformScale = 1 + (-depth / perspectiveValue);
   console.log("transformScale: " + transformScale);
-  let adjustedPosition;
+  let newPosition;
   if(parallaxLayerConfig.position){
     newLayer.style.top = parallaxLayerConfig.position + "vw";
   } else {
@@ -98,70 +87,66 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
   newLayer.style.zIndex = parallaxLayerConfig.zIndex;
   console.log("Adjusted zIndex: " + newLayer.style.zIndex);
   
-  layers.push({layer: newLayer, transformScale: transformScale});
-  
   // ... and add the container to the page
   document.body.appendChild(newLayer);   
 
   // Broken!
   // Rotate copies of the layer 90 degrees and place them even with the top and bottom of this layer to add additional sense of depth
   if(parallaxLayerConfig.use3dTop){
-    make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, newHeight, true);
+    make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, parallaxLayerConfig.height, newHeight, true);
   }
   if(parallaxLayerConfig.use3dBottom){
-    make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, newHeight, false);
+    make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, parallaxLayerConfig.height, newHeight, false);
   }
 
 }
 
 // NOTE: not recommended for use with short (<100vh) layers. Top and bottom layers can have occlusion issues.
 // There is no way around this (at least as far as I know at this point)
-const make3dLayer = function(layer, scale, depth, position, height, isTop){
+const make3dLayer = function(layer, scale, depth, position, initialHeight, depthAdjustedHeight, isTop){
   let new3dLayer = layer.cloneNode(true);
   new3dLayer.style.zIndex = layer.style.zIndex - 1;
 
-  // Stretch the layer's height to make it recede far into the background
-  let adjustedHeight = 50;
-  /*
-  // Stretch the layer's width so that the edges don't recede from the window edges in the distance
-  let newWidth = 300;
-  */
-
-  // convert height to px, because the depth depends on it and must be specified in absolute units!
-  //let heightInPx = height * screen.width / 100;
-  
-  //new3dLayer.style.left = (-newWidth / 2) + "vw";
-  new3dLayer.style.height = height;
-  let rotationDirection = 1;
-
-/*
-  if(isTop){
-    new3dLayer.style.transformOrigin = "50% 0vw";
-    new3dLayer.style.top = (position - height / 2) + "vw";
-  } else {
-    new3dLayer.style.transformOrigin = "50% 100%";
-  new3dLayer.style.top = (position + height / 2) + "vw";
-    rotationDirection = -1;
-  }
-*/
-
-  /*
-   * because of the height adjustment for depth, the amount to add or subtract to/from the source layer's position to get
-   * the position of its top and bottom needs to be adjusted as well
+  /* 
+   * Stretch the layer's height to make it recede far into the background (because it is rotated, 
+   * the layer's height is actually depth along the z-axis')
    */
-  let depthFactor = depth / perspectiveValue;
+  let adjustedHeight = 1000;
+  //stretch the layer's width so that the edges don't recede from the sides of the window in the distance
+  let adjustedWidth = 1000;
 
+  new3dLayer.style.height = adjustedHeight + "vw";
+  new3dLayer.style.width = adjustedWidth + "vw";
+  // Shift the   ...
+  
+  /*
+   * Setting the horizontal transform origin to "center" simplifies the math for placing the new 3d layer horizontally.
+   * Now we can just move the new layer left by half its width to center it 
+   */
+  new3dLayer.style.transformOrigin = "center top";
+  
+  
+  
+  
+  
+  new3dLayer.style.left = -adjustedWidth * scale / 2 - 50 + "vw";
+ 
+ 
+ 
+ 
+ 
+ 
   if(isTop){
-    new3dLayer.style.transformOrigin = "top";
-    new3dLayer.style.top = position + height / (2 / depthFactor) + "vw";
+    new3dLayer.style.top = position + "vw";
   } else {
-    new3dLayer.style.transformOrigin = "bottom";
-  new3dLayer.style.top = position - height / (2 / depthFactor) + "vw";
-    rotationDirection = -1;
+    new3dLayer.style.top = position + initialHeight + "vw";
+    // Get the difference between the width of the source layer (which also happens to be the width of the screen ie 100vw) and tis layer
+    let widthDifference = adjustedWidth - 100;
+    
+    //new3dLayer.style.left = 
 }
   //new3dLayer.style.width = newWidth + "vw";
-  new3dLayer.style.transform = "translateZ(" + (-height + depth) + "vw) scale(" + scale + ") rotateX(" + (rotationDirection*90) + "deg)";
-  layers.push({layer: new3dLayer, transformScale: scale});
+  new3dLayer.style.transform = "translateZ(" + (-adjustedHeight + depth) + "vw) scale(" + scale + ") rotateX(" + 90 + "deg)";
   document.body.appendChild(new3dLayer);
 }
 
