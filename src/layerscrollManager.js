@@ -71,7 +71,12 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
     depth = perspectiveValue*(-(parallaxLayerConfig.depth-1));
   }
   console.log("Converted depth: " + depth);
-  let transformScale = 1 + (-depth / perspectiveValue);
+  let transformScale;
+  if(depth != 0) {
+    transformScale = 1 + (-depth / perspectiveValue);
+  } else {
+    transformScale = 1;
+  }
   console.log("transformScale: " + transformScale);
   let newPosition;
   if(parallaxLayerConfig.position){
@@ -90,7 +95,12 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
   // ... and add the container to the page
   document.body.appendChild(newLayer);   
 
-  // Broken!
+  /* 
+   * !!! NOTE !!!
+   *
+   * "3D" layers are experimental and don't work well at the moment. They render slowly and poorly at desktop resolutions
+   * and suffer from depth-related texture distortion.
+   */
   // Rotate copies of the layer 90 degrees and place them even with the top and bottom of this layer to add additional sense of depth
   if(parallaxLayerConfig.use3dTop){
     make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, parallaxLayerConfig.height, newHeight, true);
@@ -125,16 +135,15 @@ const make3dLayer = function(layer, scale, depth, position, initialHeight, depth
    */
   new3dLayer.style.transformOrigin = "center top";
   
-  
-  
-  
-  
-  new3dLayer.style.left = -adjustedWidth * scale / 2 - 50 + "vw";
- 
- 
- 
- 
- 
+  let leftDisplacement;
+  if(depth < 0){
+    leftDisplacement = -adjustedWidth / 2 / scale - 50;
+  } else if(depth > 0) {
+    leftDisplacement = -adjustedWidth / 2 * scale - 50;
+  } else {
+    leftDisplacement = -adjustedWidth / 2 + 50;
+  }
+  new3dLayer.style.left = leftDisplacement + "vw";
  
   if(isTop){
     new3dLayer.style.top = position + "vw";
