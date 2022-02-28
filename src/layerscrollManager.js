@@ -1,25 +1,50 @@
-let perspectiveValue = getComputedStyle(document.documentElement).getPropertyValue("--perspective-value");
+let style = getComputedStyle(document.documentElement);
+
+let perspectiveValue = style.getPropertyValue("--perspective-value");
 perspectiveValue = parseInt(perspectiveValue.slice(0,perspectiveValue.length-2));
 
-const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, position, height, depth, imageScale, use3dTop, use3dBottom, zIndex
+// array of objects containing all of the elementHeightTrackingLayers, their corresponding DOM elements, and their last known heights.
+let layers = [];
 
+/*
+ * Unlike the standard parallaxLayer, the elementHeightTrackingLayer will dynamically match it's height to an existing DOM element
+ * This gives the advantage of allowing for more reponsive pages and "standard" web page content
+ * However, the effect will only work well with vertically tiling images.
+ */
+const addElementHeightTrackingLayer = function(){
+  return null;
+}
+const checkElementHeightTrackingLayers = function() {
+  heightTrackingElementsAndLayers.forEach(({layer, element}) => {
+    console.log(layer);
+  })
+}
+
+const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, position, height, depth, imageScale, opacity, use3dTop, use3dBottom, shouldAdjustHeight, zIndex
+  console.log("adding layer");
   //For debugging: draw horizontal lines where the top and bottom of the layer should be
+  
+  console.log("Layer position: " + parallaxLayerConfig.position);
+  console.log("Layer height: " + parallaxLayerConfig.height);
+  console.log("---");
+  console.log("");
   let hr1 = document.createElement("hr");
-  hr1.style.top = parallaxLayerConfig.position + "vw";
+  hr1.style.top = parallaxLayerConfig.position || 0 + "vw";
   hr1.style.color = "green";
   hr1.style.position = "absolute";
   hr1.style.width = "100%";
   hr1.style.margin = 0;
   let hr2 = hr1.cloneNode(false);
-  hr2.style.top = parallaxLayerConfig.position + parallaxLayerConfig.height + "vw";
+  hr2.style.top = parallaxLayerConfig.position || 0 + parallaxLayerConfig.height + "vw";
   hr2.style.color = "red";
   document.body.appendChild(hr1);
   document.body.appendChild(hr2);
-
+  
   //TODO: sanity check inputs
   if(!parallaxLayerConfig.zIndex){
-  throw new Error("zIndex is a required parameter for addImageParallaxLayer()!");
+    throw new Error("zIndex is a required parameter for addImageParallaxLayer()!");
   }
+  
   // Next, create the actual visible layer
   let newLayer; 
   if(parallaxLayerConfig.image){
@@ -51,12 +76,13 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
   
   // The height needs to be adjusted to account for the movement of the layer relative to the website content 
   let newHeight;
-  if(parallaxLayerConfig.depth && parallaxLayerConfig.depth !== 1){
+  if(parallaxLayerConfig.depth && parallaxLayerConfig.depth !== 1 &&
+    (parallaxLayerConfig.shouldAdjustHeight === undefined || parallaxLayerConfig.shouldAdjustHeight === true)){
     newHeight = 1 / parallaxLayerConfig.depth * parallaxLayerConfig.height;
   } else {
     newHeight = parallaxLayerConfig.height;
   }
-  
+
   console.log("newHeight: " + newHeight);
 
   newLayer.style.height = newHeight + "vw";
@@ -77,23 +103,50 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
   } else {
     transformScale = 1;
   }
-  console.log("transformScale: " + transformScale);
-  let newPosition;
-  if(parallaxLayerConfig.position){
-    newLayer.style.top = parallaxLayerConfig.position + "vw";
-  } else {
-    newLayer.style.top - "0vw";
-  }
-  newLayer.style.top = (parallaxLayerConfig.position || 0) + "vw";
+console.log(" ");
+console.log("transformScale: " + transformScale);
+console.log(" ");
   
+  newLayer.style.opacity = parallaxLayerConfig.opacity;
+  
+  /*
+   * translateZ causes undesireable horizontal displacement.
+   *
+   * ---Explanation---
+   * As a layer's depth goes up/the layer pushes further away from the observer,
+   * It's top and botom edges squeeze closer together towards the center - in other words the layer gets smaller.
+   * We correct for this by scaling the layer back up - however, scaling does not push the top and
+   * bottom edges of hte layer back apart; rather, it only pushes the bottom edge down.
+   * As a result, the layer will be placed further down the page than it would be if translateZ had not been applied
+   *
+   * solution: subtract half of layer's SCALED height from it's style.top
+   */
+   console.log("position: " + parallaxLayerConfig.position);
+  
+  /*
+   * Presently there is a problem with the top of any layer with depth != 0 && position === 0 not lining up with the 
+   * top of the screen; the amount by which it is displaced depends on the screen width, so changing window width
+   * will change the displacement in real time as well
+   * I have yet to find a solution to this issue; it is a major todo, but for now getting some kind of production build of
+   * the demo site up and running is priority # 1
+   */
+  let adjustedPositionString = "calc(" + (parallaxLayerConfig.position || 0) + "vw - 50vh * " + (-depth / 100) + ")";
+  console.log("***");
+  console.log("adjusted position string: " + adjustedPositionString);
+  console.log("***");
+
+  //let adjustedPosition = parallaxLayerConfig.position || 0;
+  let screenHeightInPixels = screen.height;
+
+  newLayer.style.top = adjustedPositionString;
   newLayer.style.transform = "translateZ(" + depth + "vw) scale(" + transformScale + ")";
   
   // Assign an appropriate z-index to the layer so that it will appear in front of and/or behind other layers logically
   newLayer.style.zIndex = parallaxLayerConfig.zIndex;
-  console.log("Adjusted zIndex: " + newLayer.style.zIndex);
   
   // ... and add the container to the page
   document.body.appendChild(newLayer);   
+  layers.push(newLayer);
 
   /* 
    * !!! NOTE !!!
@@ -150,17 +203,17 @@ const make3dLayer = function(layer, scale, depth, position, initialHeight, depth
   } else {
     new3dLayer.style.top = position + initialHeight + "vw";
     // Get the difference between the width of the source layer (which also happens to be the width of the screen ie 100vw) and tis layer
-    let widthDifference = adjustedWidth - 100;
+    //let widthDifference = adjustedWidth - 100;
     
     //new3dLayer.style.left = 
-}
+  }
   //new3dLayer.style.width = newWidth + "vw";
   new3dLayer.style.transform = "translateZ(" + (-adjustedHeight + depth) + "vw) scale(" + scale + ") rotateX(" + 90 + "deg)";
   document.body.appendChild(new3dLayer);
 }
 
 const makeImageLayer = function(background, imageScale){
-    newLayer = document.createElement("div"); 
+  newLayer = document.createElement("div"); 
   //Make sure the layer is visible
   newLayer.innerHTML = "&nbsp;";
   //Apply the image

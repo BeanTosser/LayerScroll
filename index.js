@@ -8,17 +8,93 @@ addImageParallaxLayer({
 });
 */
 
+/*
 addImageParallaxLayer({
   image: "images/rockBackground.jpg", //https://www.maxpixel.net/static/photo/1x/Texture-Background-Seamless-Stone-Rocks-1657467.jpg
-  position: 100, 
+  position: 0, 
   height: 85,
-  depth: 1,
+  depth: 10,
   imageScale: .9,
   use3dTop: true,
   use3dBottom: true,
   zIndex: -1000
 });
+*/
 
+/*
+ * Get the height:width ratio of the images (they are all the same resolution)
+ * in order to set the layer height accordingly (so that the image, which is shorter than it is wide,
+ * will not tile vertically)
+ */
+// Returns the original dimensions of an image file via callback
+// code borrowed from: https://aaronsmith.online/use-javascript-to-get-original-dimensions-of-an-image-file/
+
+function getImgSize(imgSrc, callback) {
+  console.log("getImgSize");
+  const newImg = new Image();
+
+  newImg.onload = function() {
+    const height = newImg.height;
+    const width = newImg.width;
+    console.log("loaded image dimensions: " + width + "; " + height);
+    callback({ width, height });
+  };
+
+  newImg.src = imgSrc; // this must be done AFTER setting onload
+}
+
+getImgSize("images/cthuljhu.1.png", function({width, height}){
+  const cthulhuLayerHeight = height / width * 100;
+  console.log("cthulhuLayerHeight: " + cthulhuLayerHeight);
+  buildCthulhuLayers(cthulhuLayerHeight);
+})
+// UnderwaterBackground.png modified from source: https://pxhere.com/en/photo/716419
+getImgSize("images/UnderwaterBackground.png", function({width, height}){
+  const oceanLayerHeight = height / width * 100;
+  console.log("oceanLayerHeight: " + oceanLayerHeight);
+  buildOceanBackgroundLayer(oceanLayerHeight);
+})
+
+function buildOceanBackgroundLayer(oceanLayerHeight){
+  addImageParallaxLayer({
+    position: 0,
+    //image: "images/UnderwaterBackground.png",
+    image: "images/testPattern.jpg",
+    //height: oceanLayerHeight,
+    height: oceanLayerHeight,
+    imageScale: 1,
+    depth: 0.8,
+    zIndex: -1008,
+    shouldAdjustHeight: false
+  });
+}
+
+function buildCthulhuLayers(cthulhuLayerHeight){
+  addImageParallaxLayer({
+    image: "images/cthuljhu.1.png",
+    position: 30,
+    height: cthulhuLayerHeight,
+    depth: 1.2,
+    zIndex: -1002,
+    shouldAdjustHeight: false
+  });
+  addImageParallaxLayer({
+    image: "images/cthuljhu.2.png",
+    position: 30,
+    height: cthulhuLayerHeight,
+    depth: 1.1,
+    zIndex: -1001,
+    shouldAdjustHeight: false
+  })
+  addImageParallaxLayer({
+    image: "images/cthuljhu.3.png",
+    position: 30,
+    height: cthulhuLayerHeight,
+    depth: 1,
+    zIndex: -1000,
+    shouldAdjustHeight: false
+  })
+}
 /*
 // Create a random starfield SVG
 let starFieldElementSource = document.getElementById("starfield");
