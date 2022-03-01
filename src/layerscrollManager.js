@@ -3,31 +3,78 @@ let style = getComputedStyle(document.documentElement);
 let perspectiveValue = style.getPropertyValue("--perspective-value");
 perspectiveValue = parseInt(perspectiveValue.slice(0,perspectiveValue.length-2));
 
-// array of objects containing all of the elementHeightTrackingLayers, their corresponding DOM elements, and their last known heights.
-let layers = [];
-
 /*
  * Unlike the standard parallaxLayer, the elementHeightTrackingLayer will dynamically match it's height to an existing DOM element
  * This gives the advantage of allowing for more reponsive pages and "standard" web page content
  * However, the effect will only work well with vertically tiling images.
  */
-const addElementHeightTrackingLayer = function(){
-  return null;
+ 
+ /*
+  * parallaxLayerConfig = {
+  *   element,
+  *   image,
+  *   depth,
+  *   imageScale,
+  *   opacity,
+  *   use3dTop,
+  *   use3dBottom,
+  *   zIndex 
+  * }
+  */
+
+let heightTrackingLayersAndElements = [];
+
+const addElementHeightTrackingLayer = function(parallaxLayerConfig){
+  modifiedParallaxLayerConfig = {
+    ...parallaxLayerConfig,
+  }
+  //
+  if(!parallaxLayerConfig.position){
+    // By default, place the tracking layer at the same position as the element it is tracking.
+    modifiedParallaxLayerConfig.position = parallaxLayerConfig.element.style.top;
+  }
+  
+  // Will return an array of 1-3 layers depending on whether 3d layers are used
+  const newElementHeightTrackingLayers = addParallaxLayer(modifiedParallaxLayerConfig);
+  const newHeightTrackingLayersAndElements = newElementHeightTrackingLayers.map(layer => {
+    console.log("element height: " + parallaxLayerConfig.element.clientHeight);
+    layer.style.height = parallaxLayerConfig.element.clientHeight + "px";
+    return {layer: layer, element: parallaxLayerConfig.element, currentHeight: parallaxLayerConfig.element.clientHeight} 
+  });
+  // Concatenate the new layers and their tracked elements onto the array
+  heightTrackingLayersAndElements = [...heightTrackingLayersAndElements, ...newHeightTrackingLayersAndElements];
+  
 }
+
 const checkElementHeightTrackingLayers = function() {
-  heightTrackingElementsAndLayers.forEach(({layer, element}) => {
-    console.log(layer);
+  heightTrackingLayersAndElements.forEach(layerObject => {
+    if(layerObject.element.clientHeight !== layerObject.currentHeight){
+      layerObject.currentHeight = layerObject.element.clientHeight;
+      layerObject.layer.style.height = layerObject.element.clientHeight + "px";
+    }
   })
 }
 
-const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, position, height, depth, imageScale, opacity, use3dTop, use3dBottom, shouldAdjustHeight, zIndex
-  console.log("adding layer");
+// Update all height tracking layers to make sure their heights continue to match those of their tracked elements
+window.addEventListener("resize", checkElementHeightTrackingLayers);
+
+/* ParallaxLayerConfig = {
+ *   element, 
+ *   image, 
+ *   position, 
+ *   height, 
+ *   depth, 
+ *   imageScale, 
+ *   opacity, 
+ *   use3dTop, 
+ *   use3dBottom, 
+ *   shouldAdjustHeight, 
+ *   zIndex
+ */
+const addParallaxLayer = function(parallaxLayerConfig){
+
   //For debugging: draw horizontal lines where the top and bottom of the layer should be
-  
-  console.log("Layer position: " + parallaxLayerConfig.position);
-  console.log("Layer height: " + parallaxLayerConfig.height);
-  console.log("---");
-  console.log("");
+  /*
   let hr1 = document.createElement("hr");
   hr1.style.top = parallaxLayerConfig.position || 0 + "vw";
   hr1.style.color = "green";
@@ -39,7 +86,7 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
   hr2.style.color = "red";
   document.body.appendChild(hr1);
   document.body.appendChild(hr2);
-  
+  */addElementHeightTrackingLayer
   //TODO: sanity check inputs
   if(!parallaxLayerConfig.zIndex){
     throw new Error("zIndex is a required parameter for addImageParallaxLayer()!");
@@ -83,7 +130,7 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
     newHeight = parallaxLayerConfig.height;
   }
 
-  console.log("newHeight: " + newHeight);
+
 
   newLayer.style.height = newHeight + "vw";
   newLayer.style.width = "100vw";
@@ -96,16 +143,16 @@ const addImageParallaxLayer = function(parallaxLayerConfig){//element, image, po
   } else {
     depth = perspectiveValue*(-(parallaxLayerConfig.depth-1));
   }
-  console.log("Converted depth: " + depth);
+
   let transformScale;
   if(depth != 0) {
     transformScale = 1 + (-depth / perspectiveValue);
   } else {
     transformScale = 1;
   }
-console.log(" ");
-console.log("transformScale: " + transformScale);
-console.log(" ");
+
+
+
   
   newLayer.style.opacity = parallaxLayerConfig.opacity;
   
@@ -121,7 +168,7 @@ console.log(" ");
    *
    * solution: subtract half of layer's SCALED height from it's style.top
    */
-   console.log("position: " + parallaxLayerConfig.position);
+
   
   /*
    * Presently there is a problem with the top of any layer with depth != 0 && position === 0 not lining up with the 
@@ -131,9 +178,9 @@ console.log(" ");
    * the demo site up and running is priority # 1
    */
   let adjustedPositionString = "calc(" + (parallaxLayerConfig.position || 0) + "vw - 50vh * " + (-depth / 100) + ")";
-  console.log("***");
-  console.log("adjusted position string: " + adjustedPositionString);
-  console.log("***");
+
+
+
 
   //let adjustedPosition = parallaxLayerConfig.position || 0;
   let screenHeightInPixels = screen.height;
@@ -146,6 +193,9 @@ console.log(" ");
   
   // ... and add the container to the page
   document.body.appendChild(newLayer);   
+  
+  let layers = [];
+  // This is PROBALY the only layer since 3d layers are experimental and not recommended for use at present
   layers.push(newLayer);
 
   /* 
@@ -156,12 +206,12 @@ console.log(" ");
    */
   // Rotate copies of the layer 90 degrees and place them even with the top and bottom of this layer to add additional sense of depth
   if(parallaxLayerConfig.use3dTop){
-    make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, parallaxLayerConfig.height, newHeight, true);
+    layers.push(make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, parallaxLayerConfig.height, newHeight, true));
   }
   if(parallaxLayerConfig.use3dBottom){
-    make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, parallaxLayerConfig.height, newHeight, false);
+    layers.push(make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, parallaxLayerConfig.height, newHeight, false));
   }
-
+  return layers;
 }
 
 // NOTE: not recommended for use with short (<100vh) layers. Top and bottom layers can have occlusion issues.
@@ -210,6 +260,7 @@ const make3dLayer = function(layer, scale, depth, position, initialHeight, depth
   //new3dLayer.style.width = newWidth + "vw";
   new3dLayer.style.transform = "translateZ(" + (-adjustedHeight + depth) + "vw) scale(" + scale + ") rotateX(" + 90 + "deg)";
   document.body.appendChild(new3dLayer);
+  return new3dLayer;
 }
 
 const makeImageLayer = function(background, imageScale){

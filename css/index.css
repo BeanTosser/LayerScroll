@@ -1,5 +1,13 @@
 #introduction {
-	height: 10000px;
+	height: 5000px;
+	background-color: #BBBBBB;
+}
+
+@media only screen and (max-width: 500px){
+	#introduction {
+	  height: 500px;
+	  background-color: #BB00BB;
+	}
 }
 
 #introduction > .header_container {

@@ -1,5 +1,5 @@
 /*
-addImageParallaxLayer({
+addParallaxLayer({
   image: "images/vineBackground.png", 
   position: 0, 
   height: 1000,
@@ -9,7 +9,7 @@ addImageParallaxLayer({
 */
 
 /*
-addImageParallaxLayer({
+addParallaxLayer({
   image: "images/rockBackground.jpg", //https://www.maxpixel.net/static/photo/1x/Texture-Background-Seamless-Stone-Rocks-1657467.jpg
   position: 0, 
   height: 85,
@@ -42,7 +42,7 @@ function getImgSize(imgSrc, callback) {
 
   newImg.src = imgSrc; // this must be done AFTER setting onload
 }
-
+/*
 getImgSize("images/cthuljhu.1.png", function({width, height}){
   const cthulhuLayerHeight = height / width * 100;
   console.log("cthulhuLayerHeight: " + cthulhuLayerHeight);
@@ -54,23 +54,22 @@ getImgSize("images/UnderwaterBackground.png", function({width, height}){
   console.log("oceanLayerHeight: " + oceanLayerHeight);
   buildOceanBackgroundLayer(oceanLayerHeight);
 })
-
+*/
+/*
 function buildOceanBackgroundLayer(oceanLayerHeight){
-  addImageParallaxLayer({
+  addParallaxLayer({
     position: 0,
-    //image: "images/UnderwaterBackground.png",
-    image: "images/testPattern.jpg",
-    //height: oceanLayerHeight,
+    image: "images/UnderwaterBackground.png",
     height: oceanLayerHeight,
     imageScale: 1,
-    depth: 0.8,
+    depth: 1,
     zIndex: -1008,
     shouldAdjustHeight: false
   });
 }
 
 function buildCthulhuLayers(cthulhuLayerHeight){
-  addImageParallaxLayer({
+  addParallaxLayer({
     image: "images/cthuljhu.1.png",
     position: 30,
     height: cthulhuLayerHeight,
@@ -78,7 +77,7 @@ function buildCthulhuLayers(cthulhuLayerHeight){
     zIndex: -1002,
     shouldAdjustHeight: false
   });
-  addImageParallaxLayer({
+  addParallaxLayer({
     image: "images/cthuljhu.2.png",
     position: 30,
     height: cthulhuLayerHeight,
@@ -86,7 +85,7 @@ function buildCthulhuLayers(cthulhuLayerHeight){
     zIndex: -1001,
     shouldAdjustHeight: false
   })
-  addImageParallaxLayer({
+  addParallaxLayer({
     image: "images/cthuljhu.3.png",
     position: 30,
     height: cthulhuLayerHeight,
@@ -95,6 +94,16 @@ function buildCthulhuLayers(cthulhuLayerHeight){
     shouldAdjustHeight: false
   })
 }
+*/
+
+// test height tracking layers
+addElementHeightTrackingLayer({
+    image: "images/seamlessTest.jpg",
+    depth: 2,
+    zIndex: -1002,
+    element: document.getElementById("introduction")
+})
+
 /*
 // Create a random starfield SVG
 let starFieldElementSource = document.getElementById("starfield");
@@ -122,9 +131,9 @@ starFieldContainer.style.height = "1000px";
 starFieldContainer.appendChild(starFieldElement);
 //starFieldElement.removeChild(sourceCircle);
 if(i < 2) { 
-  addImageParallaxLayer({element: starFieldContainer, depth: (i+0.5)/2});
+  addParallaxLayer({element: starFieldContainer, depth: (i+0.5)/2});
 } else {
-addImageParallaxLayer({element: starFieldContainer, depth: (i+1)*2});
+addParallaxLayer({element: starFieldContainer, depth: (i+1)*2});
 }
 }
 
@@ -136,7 +145,7 @@ blackBackground.style.width = "100%";
 console.log("blackBackground: " + blackBackground);
 blackBackground.innerText = "&nbsp;";
 blackBackground.style.backgroundColor="black";
-addImageParallaxLayer({element: blackBackground, height: 5000, depth: 11});
+addParallaxLayer({element: blackBackground, height: 5000, depth: 11});
 
 */
 //image, position, height, depth, imageScale
