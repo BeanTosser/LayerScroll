@@ -25,38 +25,88 @@ perspectiveValue = parseInt(perspectiveValue.slice(0,perspectiveValue.length-2))
 let heightTrackingLayersAndElements = [];
 
 const addElementHeightTrackingLayer = function(parallaxLayerConfig){
+  window.addEventListener("load", () => {
+  console.log("window loaded");
   modifiedParallaxLayerConfig = {
     ...parallaxLayerConfig,
   }
   //
   if(!parallaxLayerConfig.position){
-    // By default, place the tracking layer at the same position as the element it is tracking.
-    modifiedParallaxLayerConfig.position = parallaxLayerConfig.element.style.top;
+    /*
+     * If the user reloads the page and the browser does not automatically return the scroll position to zero,
+     * the code must account for it in order to adjust the position;
+     * By default, place the tracking layer at the same position as the element it is tracking.
+     * results of getBoundingClientRect are relative to the viewport/scroll position, so they need to be adjusted
+     * in case the user reloaded the page and the browser did not automatically reset the scroll positio to zero.
+     */
+    let adjustedLayerHeight = 1 / parallaxLayerConfig.depth * parallaxLayerConfig.element.clientHeight;
+    let adjustedElementTop = parallaxLayerConfig.element.getBoundingClientRect().top + document.body.scrollTop;
+    // All layer style properties specified in relative units, so convert pixels to VWs
+    modifiedParallaxLayerConfig.position = adjustedElementTop / screen.width * 100;
+   console.log("element pos: " + parallaxLayerConfig.element.getBoundingClientRect().top);
   }
   
   // Will return an array of 1-3 layers depending on whether 3d layers are used
   const newElementHeightTrackingLayers = addParallaxLayer(modifiedParallaxLayerConfig);
+  
   const newHeightTrackingLayersAndElements = newElementHeightTrackingLayers.map(layer => {
-    console.log("element height: " + parallaxLayerConfig.element.clientHeight);
     layer.style.height = parallaxLayerConfig.element.clientHeight + "px";
-    return {layer: layer, element: parallaxLayerConfig.element, currentHeight: parallaxLayerConfig.element.clientHeight} 
+    return {layer: layer, element: parallaxLayerConfig.element, currentHeight: parallaxLayerConfig.element.clientHeight, currentPosition: adjustedElementTop} 
   });
   // Concatenate the new layers and their tracked elements onto the array
   heightTrackingLayersAndElements = [...heightTrackingLayersAndElements, ...newHeightTrackingLayersAndElements];
+
+  const adjustTrackingLayerHeight = function(event){
+
+    layers.forEach(layer >= {
+      layer.style.height = 1 / depth * event.target.clientHeight;
+    })
+  }
   
+  
+  
+  
+  
+  
+  const adjustTrackingLayerPosition = function(){
+    //Start here! replacing window.resize event; it is horribly inefficient to check every element for chanes with ever window resize!   
+  }
+  
+  
+  
+  
+  
+  if(parallaxLayerConfig.depth < 1) {
+    parallaxLayerConfig.element.depth = perspectiveValue * (1-parallaxLayerConfig.depth);
+  } else {
+    parallaxLayerConfig.element.depth = perspectiveValue*(-(parallaxLayerConfig.depth-1));
+  }
+  
+  parallaxLayerConfig.element.addEventListener("resize", adjustTrackingLayerHeight);
+  parallaxLayerConfig.element.addEventListener("move", adjustTrackingLayerPosition);
+  // Pass parameters to the functions
+  parallaxLayerConfig.element.layers = newElementHeightTrackingLayers;
+  parallaxLayerConfig.element.depth = parallaxLayerConfig.depth;
 }
 
+// Whenever the window size changes, check to make sure the element being tracked didn't responsively change it's height or position
 const checkElementHeightTrackingLayers = function() {
   heightTrackingLayersAndElements.forEach(layerObject => {
     if(layerObject.element.clientHeight !== layerObject.currentHeight){
-      layerObject.currentHeight = layerObject.element.clientHeight;
-      layerObject.layer.style.height = layerObject.element.clientHeight + "px";
+      // The layer's height is adjusted to reflect the speeding or slowing affect that depth has on scroll speed (and thus where the element appears on the page while scrolling through it)
+      const relativeHeightChange = layerObject.currentHeight - layerObject.element.clientHeight;
+      layerObject.currentHeight = layerObject.currentHeight * relativeHeightChange;
+      layerObject.layer.top = layerObject.currentHeight / screen.width * 100 + "px";
+    }
+    let position = layerObject.element.getBoundingClientRect().top;
+    if(layerObject.element.getBoundingClientRect().top + document.body.scrollTop !== layerObject.currentPosition){
+      layerObject.currentPosition = position;
+      // All layer style properties specified in relative units, so convert pixels to VWs
+      layerObject.layer.style.top = position / screen.width * 100 + "vw";
     }
   })
 }
 
-// Update all height tracking layers to make sure their heights continue to match those of their tracked elements
-window.addEventListener("resize", checkElementHeightTrackingLayers);
 
 /* ParallaxLayerConfig = {
  *   element, 
@@ -72,7 +122,7 @@ window.addEventListener("resize", checkElementHeightTrackingLayers);
  *   zIndex
  */
 const addParallaxLayer = function(parallaxLayerConfig){
-
+  console.log("%cparallaxLayerConfig.position: " + parallaxLayerConfig.position, "color: red");
   //For debugging: draw horizontal lines where the top and bottom of the layer should be
   /*
   let hr1 = document.createElement("hr");
@@ -178,7 +228,7 @@ const addParallaxLayer = function(parallaxLayerConfig){
    * the demo site up and running is priority # 1
    */
   let adjustedPositionString = "calc(" + (parallaxLayerConfig.position || 0) + "vw - 50vh * " + (-depth / 100) + ")";
-
+  console.log("%cadjustedPositionString: " + adjustedPositionString, "color: blue");
 
 
 

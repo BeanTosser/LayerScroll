@@ -1,13 +1,8 @@
 #introduction {
-	height: 5000px;
-	background-color: #BBBBBB;
-}
-
-@media only screen and (max-width: 500px){
-	#introduction {
-	  height: 500px;
-	  background-color: #BB00BB;
-	}
+	height: 2000px;
+	background: linear-gradient(#BCBCFF, #0000FF);
+	font-size: 3rem;
+	color: black;
 }
 
 #introduction > .header_container {
@@ -16,13 +11,8 @@
 	display: block;
 }
 
-#introduction > .header-container > h1 {
+#underwater{
+	height:500px;
 	font-size: 3rem;
 	color: white;
-}
-
-#introduction > .header-container > h1::before {
-	content: "Welcome to";
-	color: white;
-	font-size: 2rem;
 }

@@ -42,7 +42,7 @@ function getImgSize(imgSrc, callback) {
 
   newImg.src = imgSrc; // this must be done AFTER setting onload
 }
-/*
+
 getImgSize("images/cthuljhu.1.png", function({width, height}){
   const cthulhuLayerHeight = height / width * 100;
   console.log("cthulhuLayerHeight: " + cthulhuLayerHeight);
@@ -54,17 +54,15 @@ getImgSize("images/UnderwaterBackground.png", function({width, height}){
   console.log("oceanLayerHeight: " + oceanLayerHeight);
   buildOceanBackgroundLayer(oceanLayerHeight);
 })
-*/
-/*
+
 function buildOceanBackgroundLayer(oceanLayerHeight){
-  addParallaxLayer({
-    position: 0,
+  addElementHeightTrackingLayer({
     image: "images/UnderwaterBackground.png",
-    height: oceanLayerHeight,
+    element: document.getElementById("underwater"),
     imageScale: 1,
-    depth: 1,
-    zIndex: -1008,
-    shouldAdjustHeight: false
+    depth: 10,
+    zIndex: -1001,
+    shouldAdjustHeight: true
   });
 }
 
@@ -94,15 +92,6 @@ function buildCthulhuLayers(cthulhuLayerHeight){
     shouldAdjustHeight: false
   })
 }
-*/
-
-// test height tracking layers
-addElementHeightTrackingLayer({
-    image: "images/seamlessTest.jpg",
-    depth: 2,
-    zIndex: -1002,
-    element: document.getElementById("introduction")
-})
 
 /*
 // Create a random starfield SVG
