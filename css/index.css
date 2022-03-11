@@ -1,5 +1,5 @@
 #introduction {
-	height: 2000px;
+	height: 300vw;
 	background: linear-gradient(#BCBCFF, #0000FF);
 	font-size: 3rem;
 	color: black;
@@ -12,7 +12,7 @@
 }
 
 #underwater{
-	height:500px;
+	height:100vw;
 	font-size: 3rem;
 	color: white;
 }

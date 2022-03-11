@@ -1,25 +1,43 @@
-/*
-addParallaxLayer({
-  image: "images/vineBackground.png", 
-  position: 0, 
-  height: 1000,
-  depth: 0.75,
-  imageScale: 1
-});
-*/
+// This script will get the content elements when they are available via window.onload
+let introductionSection, underwaterSection;
+let introductionSectionHeight, underwaterSectionHeight;
 
-/*
-addParallaxLayer({
-  image: "images/rockBackground.jpg", //https://www.maxpixel.net/static/photo/1x/Texture-Background-Seamless-Stone-Rocks-1657467.jpg
-  position: 0, 
-  height: 85,
-  depth: 10,
-  imageScale: .9,
-  use3dTop: true,
-  use3dBottom: true,
-  zIndex: -1000
-});
-*/
+window.addEventListener("load", () => {
+  introductionSection = document.getElementById("introduction");
+  underwaterSection = document.getElementById("underwater");
+  
+  // Parse the div heights into plain numbers
+  /*
+   * The regex expression "[^0-9.]" matches all non-digit characters except for ".";
+   * The next two lines, therefore, strip the units (eg "vw") from the css height strings.
+   */
+  const introductionSectionHeightInPixels = parseInt(getComputedStyle(introductionSection).height.replace(/[^0-9.]/g,''));
+  const underwaterSectionHeightInPixels = parseInt(getComputedStyle(underwaterSection).height.replace(/[^0-9.]/g,''));
+  // Convert pixel heights to vw
+  introductionSectionHeight = introductionSectionHeightInPixels / screen.width * 100;
+  underwaterSectionHeight = underwaterSectionHeightInPixels / screen.width * 100;
+  
+  console.log("underwaterSectionHeight: " + underwaterSectionHeightInPixels);
+  console.log("underwaterSectionHeight in relative units: " + underwaterSectionHeight)
+  
+  // Now that we have the information we need, convert these divs into parallax layers
+  addParallaxLayer({
+    element: introductionSection,
+    depth: 1,
+    zIndex: 0,
+    shouldAdustHeight: false,
+    height: introductionSectionHeight
+  })
+  addParallaxLayer({
+    element: underwaterSection,
+    depth: 1,
+    zIndex: 0,
+    shouldAdjustHeight: false,
+    position: introductionSectionHeight,
+    height: underwaterSectionHeight
+  })
+  buildOceanBackgroundLayer();
+})
 
 /*
  * Get the height:width ratio of the images (they are all the same resolution)
@@ -48,21 +66,16 @@ getImgSize("images/cthuljhu.1.png", function({width, height}){
   console.log("cthulhuLayerHeight: " + cthulhuLayerHeight);
   buildCthulhuLayers(cthulhuLayerHeight);
 })
-// UnderwaterBackground.png modified from source: https://pxhere.com/en/photo/716419
-getImgSize("images/UnderwaterBackground.png", function({width, height}){
-  const oceanLayerHeight = height / width * 100;
-  console.log("oceanLayerHeight: " + oceanLayerHeight);
-  buildOceanBackgroundLayer(oceanLayerHeight);
-})
 
-function buildOceanBackgroundLayer(oceanLayerHeight){
-  addElementHeightTrackingLayer({
+function buildOceanBackgroundLayer(){
+  addParallaxLayer({
     image: "images/UnderwaterBackground.png",
-    element: document.getElementById("underwater"),
     imageScale: 1,
     depth: 10,
     zIndex: -1001,
-    shouldAdjustHeight: true
+    shouldAdjustHeight: false,
+    position: introductionSectionHeight,
+    height: underwaterSectionHeight
   });
 }
 
