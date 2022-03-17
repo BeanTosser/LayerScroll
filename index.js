@@ -3,40 +3,13 @@ let introductionSection, underwaterSection;
 let introductionSectionHeight, underwaterSectionHeight;
 
 window.addEventListener("load", () => {
-  introductionSection = document.getElementById("introduction");
-  underwaterSection = document.getElementById("underwater");
-  
-  // Parse the div heights into plain numbers
-  /*
-   * The regex expression "[^0-9.]" matches all non-digit characters except for ".";
-   * The next two lines, therefore, strip the units (eg "vw") from the css height strings.
-   */
-  const introductionSectionHeightInPixels = parseInt(getComputedStyle(introductionSection).height.replace(/[^0-9.]/g,''));
-  const underwaterSectionHeightInPixels = parseInt(getComputedStyle(underwaterSection).height.replace(/[^0-9.]/g,''));
-  // Convert pixel heights to vw
-  introductionSectionHeight = introductionSectionHeightInPixels / screen.width * 100;
-  underwaterSectionHeight = underwaterSectionHeightInPixels / screen.width * 100;
-  
-  console.log("underwaterSectionHeight: " + underwaterSectionHeightInPixels);
-  console.log("underwaterSectionHeight in relative units: " + underwaterSectionHeight)
-  
-  // Now that we have the information we need, convert these divs into parallax layers
-  addParallaxLayer({
-    element: introductionSection,
-    depth: 1,
-    zIndex: 0,
-    shouldAdustHeight: false,
-    height: introductionSectionHeight
-  })
-  addParallaxLayer({
-    element: underwaterSection,
-    depth: 1,
-    zIndex: 0,
-    shouldAdjustHeight: false,
-    position: introductionSectionHeight,
-    height: underwaterSectionHeight
-  })
-  buildOceanBackgroundLayer();
+    introductionSection = document.getElementById("introduction");
+    underwaterSection = document.getElementById("underwater");
+    introductionSectionHeight = parseInt(getComputedStyle(introductionSection).height.replace(/[^0-9].]/g, '')) / window.innerWidth * 100;
+    console.log("introductionSectionHeight: " + introductionSectionHeight);
+    underwaterSectionHeight = parseInt(getComputedStyle(underwaterSection).height.replace(/[^0-9].]/g, '')) / window.innerWidth * 100;
+    buildContentLayers();
+    buildOceanBackgroundLayer(underwaterSectionHeight);
 })
 
 /*
@@ -67,15 +40,16 @@ getImgSize("images/cthuljhu.1.png", function({width, height}){
   buildCthulhuLayers(cthulhuLayerHeight);
 })
 
-function buildOceanBackgroundLayer(){
+// UnderwaterBackground.png modified from source: https://pxhere.com/en/photo/716419
+function buildOceanBackgroundLayer(sectionHeight){
   addParallaxLayer({
     image: "images/UnderwaterBackground.png",
     imageScale: 1,
     depth: 10,
     zIndex: -1001,
-    shouldAdjustHeight: false,
-    position: introductionSectionHeight,
-    height: underwaterSectionHeight
+    height: sectionHeight,
+    shouldAdjustHeight: true,
+    position: introductionSectionHeight
   });
 }
 
@@ -106,6 +80,23 @@ function buildCthulhuLayers(cthulhuLayerHeight){
   })
 }
 
+function buildContentLayers(){
+  console.log("intro height on building content layers: " + introductionSectionHeight);
+  addParallaxLayer({
+    element: underwaterSection,
+    depth: 1,
+    zIndex: 0,
+    shouldAdjustHeight: false,
+    position: introductionSectionHeight
+  })
+  addParallaxLayer({
+    element: introductionSection,
+    depth: 1,
+    zIndex: 0,
+    shouldAdjustHeight: false,
+    position: 0
+  })
+}
 /*
 // Create a random starfield SVG
 let starFieldElementSource = document.getElementById("starfield");

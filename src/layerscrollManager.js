@@ -34,7 +34,7 @@ const addParallaxLayer = function(parallaxLayerConfig){
   */
 
   //TODO: sanity check inputs
-  if((typeof parallaxLayerConfig.zIndex)!== "number"){
+  if(!((typeof parallaxLayerConfig.zIndex) === "number")){
     throw new Error("zIndex is a required parameter for addImageParallaxLayer()!");
   }
   
@@ -65,24 +65,39 @@ const addParallaxLayer = function(parallaxLayerConfig){
    */
   
   newLayer.className = "parallax-layer";
+
   //newLayer.style.transform = "translateY(" + (parallaxLayerConfig.position || 0) + "px)";
-  
-  // The height needs to be adjusted to account for the movement of the layer relative to the website content (unless instructed NOT to via parallaxLayerConfig.shouldAdustHeight).
-  let newHeight;
+  console.log("Setting height of layer with id: " + newLayer.id);
+
+  // The height needs to be adjusted to account for the movement of the layer relative to the website content 
+  let baseHeight, newHeight;
+
+  // If this is a content layer (that is if the "element" parameter of the config is defined)
+  console.log("parallaxLayerConfig.element: " + parallaxLayerConfig.element);
   if(parallaxLayerConfig.element){
-    
+    let elementRect = parallaxLayerConfig.element.getBoundingClientRect();
+    // Get the height and convert to vw
+    baseHeight = (elementRect.bottom - elementRect.top) / window.innerWidth * 100;
+  } else {
+    baseHeight = parallaxLayerConfig.height || 100;
   }
-  if((typeof parallaxLayerConfig.depth) === "number" && parallaxLayerConfig.depth !== 1 &&
+  console.log("baseHeight: " + baseHeight);
+  if(parallaxLayerConfig.depth && parallaxLayerConfig.depth !== 1 &&
     (parallaxLayerConfig.shouldAdjustHeight === undefined || parallaxLayerConfig.shouldAdjustHeight === true)){
-    newLayer.style.height = 1 / parallaxLayerConfig.depth * parallaxLayerConfig.height;
-  } else if (!parallaxLayerConfig.element){
-    newLayer.style.height = parallaxLayerConfig.height;
+    //First, convert window.innerHeight from px to vw
+    let screenHeightInVw = window.innerHeight / window.innerWidth * 100;
+    console.log("window.innerHeight: " + window.innerHeight);
+    console.log("window.innerWidth: " + window.innerWidth);
+    console.log("screenHeightInVw: " + screenHeightInVw);
+    newHeight = 1 / parallaxLayerConfig.depth * baseHeight + 1 / parallaxLayerConfig.depth * screenHeightInVw + screenHeightInVw / 4;
+  } else {
+    newHeight = baseHeight;
   }
   
-  //
-  if(!parallaxLayerConfig.element){
-    newLayer.style.height = newHeight + "vw";
-  }
+console.log("baseheight: " + baseHeight);
+
+
+  newLayer.style.height = newHeight + "vw";
   console.log("Just set layer height to: " + newHeight + "vw");
   newLayer.style.width = "100vw";
   newLayer.style.transformOrigin = "top";
@@ -123,25 +138,21 @@ const addParallaxLayer = function(parallaxLayerConfig){
   
   /*
    * Presently there is a problem with the top of any layer with depth != 0 && position === 0 not lining up with the 
-   * top of the screen; the amount by which it is displaced depends on the screen width, so changing window width
+   * top of the screen; the amount by which it is displaced depends on the window.innerWidth, so changing window width
    * will change the displacement in real time as well
    * I have yet to find a solution to this issue; it is a major todo, but for now getting some kind of production build of
    * the demo site up and running is priority # 1
    */
-  let originalPosition;
-  if(parallaxLayerConfig.element) {
-    let originalPositionInPixels = parallaxLayerConfig.element.getBoundingClientRect().top + window.scrollY;
-    console.log("originalPositionInPixels: " + originalPositionInPixels);
-    // convert position to vw
-    originalPosition = originalPositionInPixels / screen.width * 100;
-    console.log("Original position in vw: " + originalPosition);
-  } else {
-    originalPosition = parallaxLayerConfig.position || 0
-  }
-  let adjustedPositionString = "calc(" + originalPosition + "vw - 50vh * " + (-depth / 100) + ")";
+  let adjustedPositionString = "calc(" + (parallaxLayerConfig.position || 0) + "vw - 50vh * " + (-depth / 100) + ")";
   console.log("%cadjustedPositionString: " + adjustedPositionString, "color: blue");
 
-  newLayer.style.top = adjustedPositionString;
+
+
+  //let adjustedPosition = parallaxLayerConfig.position || 0;
+  let screenHeightInPixels = window.innerHeight;
+
+  //newLayer.style.top = adjustedPositionString;
+  newLayer.style.top = parallaxLayerConfig.position + "vw";
   newLayer.style.transform = "translateZ(" + depth + "vw) scale(" + transformScale + ")";
   
   // Assign an appropriate z-index to the layer so that it will appear in front of and/or behind other layers logically
@@ -153,23 +164,19 @@ const addParallaxLayer = function(parallaxLayerConfig){
   let layers = [];
   // This is PROBALY the only layer since 3d layers are experimental and not recommended for use at present
   layers.push(newLayer);
-   
+
   /* 
    * !!! NOTE !!!
    *
    * "3D" layers are experimental and don't work well at the moment. They render slowly and poorly at desktop resolutions
    * and suffer from depth-related texture distortion.
    */
-  
-  // content layers aren't eligible to become 3d layers
-  if(!parallaxLayerConfig.element){
-    // Rotate copies of the layer 90 degrees and place them even with the top and bottom of this layer to add additional sense of depth
-    if(parallaxLayerConfig.use3dTop){
-      layers.push(make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, parallaxLayerConfig.height, newHeight, true));
-    }
-    if(parallaxLayerConfig.use3dBottom){
-      layers.push(make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, parallaxLayerConfig.height, newHeight, false));
-    }
+  // Rotate copies of the layer 90 degrees and place them even with the top and bottom of this layer to add additional sense of depth
+  if(parallaxLayerConfig.use3dTop){
+    layers.push(make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, parallaxLayerConfig.height, newHeight, true));
+  }
+  if(parallaxLayerConfig.use3dBottom){
+    layers.push(make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, parallaxLayerConfig.height, newHeight, false));
   }
   return layers;
 }
