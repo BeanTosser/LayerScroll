@@ -14,6 +14,10 @@ perspectiveValue = parseInt(perspectiveValue.slice(0,perspectiveValue.length-2))
  *   use3dTop, 
  *   use3dBottom, 
  *   shouldAdjustHeight, 
+ *   shouldAlignTop:     elements with depth != 0 will have tops that appear to be at the specified positions
+                         at the center of the screen; For deep/shallow layers to appear to align at the TOP
+                         of the screen, we need to subtract half the view height multiplied by the depth-determined
+                         transformScale.
  *   zIndex
  */
 const addParallaxLayer = function(parallaxLayerConfig){
@@ -70,7 +74,7 @@ const addParallaxLayer = function(parallaxLayerConfig){
   console.log("Setting height of layer with id: " + newLayer.id);
 
   // The height needs to be adjusted to account for the movement of the layer relative to the website content 
-  let baseHeight, newHeight;
+  let baseHeight, newHeightString;
 
   // If this is a content layer (that is if the "element" parameter of the config is defined)
   console.log("parallaxLayerConfig.element: " + parallaxLayerConfig.element);
@@ -82,27 +86,8 @@ const addParallaxLayer = function(parallaxLayerConfig){
     baseHeight = parallaxLayerConfig.height || 100;
   }
   console.log("baseHeight: " + baseHeight);
-  if(parallaxLayerConfig.depth && parallaxLayerConfig.depth !== 1 &&
-    (parallaxLayerConfig.shouldAdjustHeight === undefined || parallaxLayerConfig.shouldAdjustHeight === true)){
-    //First, convert window.innerHeight from px to vw
-    let screenHeightInVw = window.innerHeight / window.innerWidth * 100;
-    console.log("window.innerHeight: " + window.innerHeight);
-    console.log("window.innerWidth: " + window.innerWidth);
-    console.log("screenHeightInVw: " + screenHeightInVw);
-    newHeight = 1 / parallaxLayerConfig.depth * baseHeight + 1 / parallaxLayerConfig.depth * screenHeightInVw + screenHeightInVw / 4;
-  } else {
-    newHeight = baseHeight;
-  }
   
-console.log("baseheight: " + baseHeight);
-
-
-  newLayer.style.height = newHeight + "vw";
-  console.log("Just set layer height to: " + newHeight + "vw");
-  newLayer.style.width = "100vw";
-  newLayer.style.transformOrigin = "top";
-  
-  let depth;
+    let depth;
   //=IF(A10<0,100*(A10+1),100-100/(A10+1))
   if(parallaxLayerConfig.depth < 1) {
     depth = perspectiveValue * (1-parallaxLayerConfig.depth);
@@ -116,25 +101,37 @@ console.log("baseheight: " + baseHeight);
   } else {
     transformScale = 1;
   }
+  
+  if(parallaxLayerConfig.depth && parallaxLayerConfig.depth !== 1 &&
+    (parallaxLayerConfig.shouldAdjustHeight === undefined || parallaxLayerConfig.shouldAdjustHeight === true)){
+      
+    /* 
+     * As noted earlier, the height will also need to be lengthened so that the BOTTOM of the layer will align with the bottom of the
+     * presumed element that this layer is supposed to align with when shouldAdjustPosition is true
+     * ALSO NOTE there is no point in increasing the height if the layer is at depth 0 or shouldAdjustHeight is false 
+     */ 
+    console.log("transformScale: " + transformScale);
+    console.log("1 / depth: " + 1 / parallaxLayerConfig.depth);
+    if(parallaxLayerConfig.shouldAdjustPosition){
+      console.log("Here it is");
+      newHeightString = "calc(" + (transformScale * baseHeight) + "vw + " + transformScale + " * 50vh";
+    }
+    //First, convert window.innerHeight from px to vw
+    //newHeightString = "calc(" + (transformScale * baseHeight) + "vw + 50vh)";
+    newHeightString = "calc(" + (1 / parallaxLayerConfig.depth * baseHeight) + "vw + " + (1 / parallaxLayerConfig.depth) + " * 50vh";
+  } else {
+    newHeightString = baseHeight + "vw";
+  }
+  
+console.log("baseheight: " + baseHeight);
 
 
-
+  newLayer.style.height = newHeightString;
+  console.log("Just set layer height to: " + newHeightString);
+  newLayer.style.width = "100vw";
+  newLayer.style.transformOrigin = "center top";
   
   newLayer.style.opacity = parallaxLayerConfig.opacity;
-  
-  /*
-   * translateZ causes undesireable horizontal displacement.
-   *
-   * ---Explanation---
-   * As a layer's depth goes up/the layer pushes further away from the observer,
-   * It's top and botom edges squeeze closer together towards the center - in other words the layer gets smaller.
-   * We correct for this by scaling the layer back up - however, scaling does not push the top and
-   * bottom edges of hte layer back apart; rather, it only pushes the bottom edge down.
-   * As a result, the layer will be placed further down the page than it would be if translateZ had not been applied
-   *
-   * solution: subtract half of layer's SCALED height from it's style.top
-   */
-
   
   /*
    * Presently there is a problem with the top of any layer with depth != 0 && position === 0 not lining up with the 
@@ -143,7 +140,25 @@ console.log("baseheight: " + baseHeight);
    * I have yet to find a solution to this issue; it is a major todo, but for now getting some kind of production build of
    * the demo site up and running is priority # 1
    */
-  let adjustedPositionString = "calc(" + (parallaxLayerConfig.position || 0) + "vw - 50vh * " + (-depth / 100) + ")";
+  //let adjustedPositionString = "calc(" + (parallaxLayerConfig.position || 0) + "vw - 50vh * " + -transformScale + ")";
+  let adjustedPositionString;
+  
+  /*
+   * By default, layers with depth != 0 (that is not even with the screen) are positioned such their tops appear to align with their
+   * specified positions at the center of the screen. This is undesireable if, for example, the layer needs to align with a content
+   * layer at depth 0; in this case, the positions should align at the TOP of the screen.
+   * The config parameter "shouldAdjustPosition" triggers this behavior when true by moving the layer upwards relative to the document
+   * as a whole
+   * NOTE that the height will also need to be lengthened so that the BOTTOM of the layer will align with the bottom of the
+   * presumed element that this layer is supposed to align with.
+   */
+
+  if(parallaxLayerConfig.shouldAdjustPosition === true) {
+    console.log("%ctransformScale: " + transformScale, "color: pink");
+    adjustedPositionString = "calc(" + (parallaxLayerConfig.position || 0) + "vw - 25vh * " + transformScale + ")";
+  } else {
+    adjustedPositionString = (parallaxLayerConfig.position || 0) + "vw";
+  }
   console.log("%cadjustedPositionString: " + adjustedPositionString, "color: blue");
 
 
@@ -151,8 +166,8 @@ console.log("baseheight: " + baseHeight);
   //let adjustedPosition = parallaxLayerConfig.position || 0;
   let screenHeightInPixels = window.innerHeight;
 
-  //newLayer.style.top = adjustedPositionString;
-  newLayer.style.top = parallaxLayerConfig.position + "vw";
+  newLayer.style.top = adjustedPositionString;
+  //newLayer.style.top = parallaxLayerConfig.position + "vw";
   newLayer.style.transform = "translateZ(" + depth + "vw) scale(" + transformScale + ")";
   
   // Assign an appropriate z-index to the layer so that it will appear in front of and/or behind other layers logically
