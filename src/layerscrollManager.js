@@ -13,11 +13,6 @@ perspectiveValue = parseInt(perspectiveValue.slice(0,perspectiveValue.length-2))
  *   opacity, 
  *   use3dTop, 
  *   use3dBottom, 
- *   shouldAdjustHeight, 
- *   shouldAlignTop:     elements with depth != 0 will have tops that appear to be at the specified positions
-                         at the center of the screen; For deep/shallow layers to appear to align at the TOP
-                         of the screen, we need to subtract half the view height multiplied by the depth-determined
-                         transformScale.
  *   zIndex
  */
 const addParallaxLayer = function(parallaxLayerConfig){
@@ -101,31 +96,29 @@ const addParallaxLayer = function(parallaxLayerConfig){
     transformScale = 1;
   }
   
-  if(parallaxLayerConfig.depth && parallaxLayerConfig.depth !== 1 &&
-    (parallaxLayerConfig.shouldAdjustHeight === undefined || parallaxLayerConfig.shouldAdjustHeight === true)){
-      
+  //if(parallaxLayerConfig.depth && parallaxLayerConfig.depth !== 1 &&
+  //  (parallaxLayerConfig.shouldAdjustHeight === undefined || parallaxLayerConfig.shouldAdjustHeight === true)){
+  if(parallaxLayerConfig.depth && parallaxLayerConfig.depth !== 1){
     /* 
      * As noted earlier, the height will also need to be lengthened so that the BOTTOM of the layer will align with the bottom of the
      * presumed element that this layer is supposed to align with when shouldAdjustPosition is true
      * ALSO NOTE there is no point in increasing the height if the layer is at depth 0 or shouldAdjustHeight is false 
      */ 
-    if(parallaxLayerConfig.shouldAdjustPosition){
-      // We might need to reference this css-calculated height later with additional calculations, so save it without the "calc()" function      
-      newHeightStringWithoutCalc = (1 / parallaxLayerConfig.depth * baseHeight) + "vw + " + (transformScale - 1) / transformScale * 100 + "vh";
-      newHeightString = "calc(" + newHeightStringWithoutCalc + ")";
+    //if(parallaxLayerConfig.shouldAdjustPosition){
+    // We might need to reference this css-calculated height later with additional calculations, so save it without the "calc()" function      
+    newHeightStringWithoutCalc = (1 / parallaxLayerConfig.depth * baseHeight) + "vw + " + (transformScale - 1) / transformScale * 100 + "vh";
+    newHeightString = "calc(" + newHeightStringWithoutCalc + ")";
+    /*
     } else {
       newHeightStringWithoutCalc = (1 / parallaxLayerConfig.depth * baseHeight) + "vw + " + (1 / parallaxLayerConfig.depth) + " * 50vh";
       newHeightString = "calc(" + newHeightStringWithoutCalc + ")";
     }
+    */
   } else {
     newHeightString = baseHeight + "vw";
   }
-  
-console.log("baseheight: " + baseHeight);
-
 
   newLayer.style.height = newHeightString;
-  console.log("Just set layer height to: " + newHeightString);
   newLayer.style.width = "100vw";
   newLayer.style.transformOrigin = "center top";
   
@@ -151,7 +144,7 @@ console.log("baseheight: " + baseHeight);
    * presumed element that this layer is supposed to align with.
    */
 
-  if(parallaxLayerConfig.shouldAdjustPosition === true) {
+  //if(parallaxLayerConfig.shouldAdjustPosition === true) {
     /*
      * setting the layer closer to/further from the viewer changes its apparent size, "pushing" the top and bottom out or "sucking" them in. 
      * This results in the layer being displaced from its position by half of the layer's size change multipliedby its transformScale
@@ -165,23 +158,11 @@ console.log("baseheight: " + baseHeight);
     
     console.log("%clayerHeightInVw: " + layerHeightInVw + "; halvedHeightChange: " + halvedHeightChange, "color:gray");
     adjustedPositionString = "calc(" + (parallaxLayerConfig.position || 0) + "vw - " + (50 * transformScale - 50) + "vh)";
-  } else {
-    adjustedPositionString = (parallaxLayerConfig.position || 0) + "vw";
-  }
-
-  console.log("***");
-  console.log("***");
-  console.log("***");
-  console.log("adustedPosString: " + adjustedPositionString);
-  console.log("***");
-  console.log("***");
-  console.log("***");
-
-  //let adjustedPosition = parallaxLayerConfig.position || 0;
-  let screenHeightInPixels = window.innerHeight;
+  //} else {
+    //adjustedPositionString = (parallaxLayerConfig.position || 0) + "vw";
+  //}
 
   newLayer.style.top = adjustedPositionString;
-  //newLayer.style.top = parallaxLayerConfig.position + "vw";
   newLayer.style.transform = "translateZ(" + depth + "vw) scale(" + transformScale + ")";
   
   // Assign an appropriate z-index to the layer so that it will appear in front of and/or behind other layers logically
