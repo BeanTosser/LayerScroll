@@ -45,7 +45,7 @@ function buildOceanBackgroundLayer(sectionHeight){
   addParallaxLayer({
     image: "images/UnderwaterBackground.png",
     imageScale: 1,
-    depth: 2,
+    depth: 8,
     zIndex: -1001,
     height: sectionHeight,
     shouldAdjustHeight: true,
