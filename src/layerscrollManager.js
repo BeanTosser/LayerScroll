@@ -180,17 +180,17 @@ const addParallaxLayer = function(parallaxLayerConfig){
    */
   // Rotate copies of the layer 90 degrees and place them even with the top and bottom of this layer to add additional sense of depth
   if(parallaxLayerConfig.use3dTop){
-    layers.push(make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, parallaxLayerConfig.height, newHeight, true));
+    layers.push(make3dLayer(newLayer, transformScale, depth, adjustedPositionString, newHeightStringWithoutCalc, true));
   }
   if(parallaxLayerConfig.use3dBottom){
-    layers.push(make3dLayer(newLayer, transformScale, depth, parallaxLayerConfig.position || 0, parallaxLayerConfig.height, newHeight, false));
+    layers.push(make3dLayer(newLayer, transformScale, depth, adjustedPositionString, newHeightStringWithoutCalc, false));
   }
   return layers;
 }
 
 // NOTE: not recommended for use with short (<100vh) layers. Top and bottom layers can have occlusion issues.
 // There is no way around this (at least as far as I know at this point)
-const make3dLayer = function(layer, scale, depth, position, initialHeight, depthAdjustedHeight, isTop){
+const make3dLayer = function(layer, scale, depth, position, initialHeight, isTop){
   let new3dLayer = layer.cloneNode(true);
   new3dLayer.style.zIndex = layer.style.zIndex - 1;
 
@@ -223,9 +223,9 @@ const make3dLayer = function(layer, scale, depth, position, initialHeight, depth
   new3dLayer.style.left = leftDisplacement + "vw";
  
   if(isTop){
-    new3dLayer.style.top = position + "vw";
+    new3dLayer.style.top = "calc(" + position + ")";
   } else {
-    new3dLayer.style.top = position + initialHeight + "vw";
+    new3dLayer.style.top = "calc(" + position + " + " + initialHeight;
     // Get the difference between the width of the source layer (which also happens to be the width of the screen ie 100vw) and tis layer
     //let widthDifference = adjustedWidth - 100;
     

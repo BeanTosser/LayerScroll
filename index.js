@@ -43,12 +43,14 @@ getImgSize("images/cthuljhu.1.png", function({width, height}){
 // UnderwaterBackground.png modified from source: https://pxhere.com/en/photo/716419
 function buildOceanBackgroundLayer(sectionHeight){
   addParallaxLayer({
-    image: "images/UnderwaterBackground.png",
+    image: "images/seamlessTest.jpg",
     imageScale: 1,
     depth: 10,
     zIndex: -1001,
     height: sectionHeight,
     shouldAdjustHeight: true,
+    use3dTop: true,
+    use3dBottom: true,
     shouldAdjustPosition: true,
     position: introductionSectionHeight
   });
