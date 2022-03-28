@@ -3,6 +3,82 @@ let style = getComputedStyle(document.documentElement);
 let perspectiveValue = style.getPropertyValue("--perspective-value");
 perspectiveValue = parseInt(perspectiveValue.slice(0,perspectiveValue.length-2));
 
+/*
+ * Object layers are meant to add a single "object" with depth (as opposed to a window-spanning "layer").
+ * Unlike layers, objects will not scale to adjust their apparent size as a function of depth; they SHOULD appear
+ * larger or smaller based on their depths.
+ *
+ * objectLayerConfig = {
+ *   image,
+ *   depth,
+ *   positionX,
+ *   positionY,
+ *   width,
+ *   height,
+ *   altText,
+ *   zIndex
+ * }
+ */
+const addObjectLayer = function(objectLayerConfig){
+  let newObject = document.createElement("div");
+
+  const image = objectLayerConfig.image;
+  const depth = convertDepth(objectLayerConfig.depth || 0);
+  const positionX = objectLayerConfig.positionX || 0;
+  const positionY = objectLayerConfig.positionY || 0;
+  const width = objectLayerConfig.width || 50;
+  const height = objectLayerConfig.height || 50;
+  const zIndex = objectLayerConfig.index || 0;
+  
+  if(typeof image !== "string"){
+    throw("invalid image!");
+  }
+
+  newObject.style.backgroundImage="url(" + image + ")";
+  newObject.style.backgroundRepeat="no-repeat";
+  newObject.style.backgroundSize=width + "vw " + height + "vw";
+  newObject.style.position = "absolute";
+  newObject.class = "parallax_layer";
+  newObject.style.width = width + "vw";
+  newObject.style.height = height + "vw";
+  newObject.style.top = positionY + "vw";
+  newObject.style.zIndex = zIndex;
+  /* 
+   * Depth displaces objects, because translateZ relies on a vanishing point at the center of the screen; therefore.
+   * In order to preserve an object's horizontal position in the window, it is necessary to adjust for the vanishing point distortion.
+   */
+  // How far away the object is from the center of the screen before applying depth
+  const targetDisplacementFromCenter = positionX - 50;
+  // Distance from the center of the screen after applying depth
+  const actualDisplacementFromCenter = (positionX - 50) * (1 / objectLayerConfig.depth);
+  // The difference in the two distances (and the amount by which the object must be moved to correct it's position)
+  const depthDisplacementAdjustment = targetDisplacementFromCenter - actualDisplacementFromCenter;
+  // The target position of the object relative to the left side of the screen (as opposed to the center)
+  const adjustedPosition = positionX + depthDisplacementAdjustment;
+  newObject.style.left = adjustedPosition + "vw";
+  
+  newObject.style.transform = "translateZ(" + depth + "vw)";
+  
+  newObject.addEventListener("click", () => {
+    console.log("----------------------------------");
+    console.log("originalPosition: " + positionX);
+    console.log("targetDisplacement: " + targetDisplacementFromCenter);
+    console.log("actualDisplacement: " + actualDisplacementFromCenter);
+    console.log("depthDisplacementAdjustment: " + depthDisplacementAdjustment);
+    console.log("adjustedPosition: " + adjustedPosition);
+  })
+  
+  document.body.appendChild(newObject);
+  console.log("Just added object layer");
+}
+
+const convertDepth = function(depth){
+  if(depth < 1) {
+    return perspectiveValue * (1-depth);
+  }
+  return perspectiveValue * (-(depth-1));
+}
+
 /* ParallaxLayerConfig = {
  *   element, 
  *   image, 
@@ -81,11 +157,7 @@ const addParallaxLayer = function(parallaxLayerConfig){
   
     let depth;
   //=IF(A10<0,100*(A10+1),100-100/(A10+1))
-  if(parallaxLayerConfig.depth < 1) {
-    depth = perspectiveValue * (1-parallaxLayerConfig.depth);
-  } else {
-    depth = perspectiveValue * (-(parallaxLayerConfig.depth-1));
-  }
+  depth=convertDepth(parallaxLayerConfig.depth);
 
   // The layer's apparent size grows or shrinks according to it's depth; use transformScale to correct for this affect
 

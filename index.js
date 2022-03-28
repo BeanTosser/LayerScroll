@@ -10,7 +10,47 @@ window.addEventListener("load", () => {
     underwaterSectionHeight = parseInt(getComputedStyle(underwaterSection).height.replace(/[^0-9].]/g, '')) / window.innerWidth * 100;
     buildContentLayers();
     buildOceanBackgroundLayer(underwaterSectionHeight);
+    buildCloudObjects();
 })
+
+const buildCloudObjects = function() {
+//Generate random clouds within introduction layer
+const numClouds = 15;
+let positionTotal = 0;
+let randomTotal = 0;
+for(let i = 0; i < numClouds; i++){
+  let depth = Math.random() * 4 + 0.5;
+  let width = Math.random() * 30 + 30;
+  let height = Math.random() * 15 + 20;
+  let scaledWidth = 1 / depth * width;
+  console.log("cloud width: " + width);
+  console.log("depth: " + depth);
+  console.log("scaledWidth: " + scaledWidth);
+  let maxPositionX = 100 - scaledWidth * 0.2;
+  let minPositionX = -scaledWidth * 0.8;
+  console.log("maxPositionX(100 - scaledWidth * 0.2): " + maxPositionX);
+  console.log("minPositionX(-scaledWidth * 0.8): " + minPositionX);
+  let positionRandom = Math.random();
+  console.log("positionRandom: " + positionRandom);
+  randomTotal += positionRandom;
+  let positionX = positionRandom * (maxPositionX - minPositionX) + minPositionX;
+  let positionY = Math.random() * introductionSectionHeight;
+  positionTotal += positionX;
+  addObjectLayer({
+    zIndex: -1000,
+    image: "images/cloud.png",
+    positionX: positionX,
+    positionY: positionY,
+    depth: depth,
+    width: width,
+    height: height,
+  })
+}
+console.log(" ");
+console.log("Average cloud position: " + (positionTotal / 15));
+console.log("Average random num: " + (randomTotal / 15));
+console.log(" ");
+}
 
 /*
  * Get the height:width ratio of the images (they are all the same resolution)
@@ -34,11 +74,13 @@ function getImgSize(imgSrc, callback) {
   newImg.src = imgSrc; // this must be done AFTER setting onload
 }
 
+/*
 getImgSize("images/cthuljhu.1.png", function({width, height}){
   const cthulhuLayerHeight = height / width * 100;
   console.log("cthulhuLayerHeight: " + cthulhuLayerHeight);
   buildCthulhuLayers(cthulhuLayerHeight);
 })
+*/
 
 // UnderwaterBackground.png modified from source: https://pxhere.com/en/photo/716419
 function buildOceanBackgroundLayer(sectionHeight){
@@ -49,13 +91,28 @@ function buildOceanBackgroundLayer(sectionHeight){
     zIndex: -1001,
     height: sectionHeight,
     shouldAdjustHeight: true,
-    use3dTop: true,
-    use3dBottom: true,
     shouldAdjustPosition: true,
     position: introductionSectionHeight
   });
 }
+function buildOceanForegroundLayer(sectionHeight) {
+  addParallaxLayer({
+    image: "images/simpleWater.png",
+    imageScale: 1,
+    depth: 0.9,
+    zIndex: 1000,
+    opacity: 0.5,
+    use3dTop: true,
+    shouldAdjustHeight: true,
+    shouldAdjustPosition: true,
+    position: introductionSectionHeight,
+    height: sectionHeight
+  });
+}
 
+
+
+/*
 function buildCthulhuLayers(cthulhuLayerHeight){
   addParallaxLayer({
     image: "images/cthuljhu.1.png",
@@ -82,6 +139,7 @@ function buildCthulhuLayers(cthulhuLayerHeight){
     shouldAdjustHeight: false
   })
 }
+*/
 
 function buildContentLayers(){
   console.log("intro height on building content layers: " + introductionSectionHeight);
@@ -96,7 +154,7 @@ function buildContentLayers(){
   addParallaxLayer({
     element: introductionSection,
     depth: 1,
-    zIndex: 0,
+    zIndex: -9999,
     shouldAdjustHeight: false,
     shouldAdjustPosition: false,
     position: 0
