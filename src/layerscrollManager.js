@@ -59,17 +59,7 @@ const addObjectLayer = function(objectLayerConfig){
   
   newObject.style.transform = "translateZ(" + depth + "vw)";
   
-  newObject.addEventListener("click", () => {
-    console.log("----------------------------------");
-    console.log("originalPosition: " + positionX);
-    console.log("targetDisplacement: " + targetDisplacementFromCenter);
-    console.log("actualDisplacement: " + actualDisplacementFromCenter);
-    console.log("depthDisplacementAdjustment: " + depthDisplacementAdjustment);
-    console.log("adjustedPosition: " + adjustedPosition);
-  })
-  
   document.body.appendChild(newObject);
-  console.log("Just added object layer");
 }
 
 const convertDepth = function(depth){
@@ -223,12 +213,8 @@ const addParallaxLayer = function(parallaxLayerConfig){
      */
     // Need to adjust the position by layerHeight * (1)
     let layerHeightInVw = newLayer.offsetHeight * 100 / window.innerWidth;
-    console.log("window.innerWidth: " + window.innerWidth);
-    console.log("newLayer.offsetHeight: " + newLayer.offsetHeight);
     
     let halvedHeightChange = (Math.abs(layerHeightInVw - layerHeightInVw / transformScale)) / 2;
-    
-    console.log("%clayerHeightInVw: " + layerHeightInVw + "; halvedHeightChange: " + halvedHeightChange, "color:gray");
     adjustedPositionString = "calc(" + (parallaxLayerConfig.position || 0) + "vw - " + (50 * transformScale - 50) + "vh)";
   //} else {
     //adjustedPositionString = (parallaxLayerConfig.position || 0) + "vw";

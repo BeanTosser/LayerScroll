@@ -6,7 +6,6 @@ window.addEventListener("load", () => {
     introductionSection = document.getElementById("introduction");
     underwaterSection = document.getElementById("underwater");
     introductionSectionHeight = parseInt(getComputedStyle(introductionSection).height.replace(/[^0-9].]/g, '')) / window.innerWidth * 100;
-    console.log("introductionSectionHeight: " + introductionSectionHeight);
     underwaterSectionHeight = parseInt(getComputedStyle(underwaterSection).height.replace(/[^0-9].]/g, '')) / window.innerWidth * 100;
     buildContentLayers();
     buildOceanBackgroundLayer(underwaterSectionHeight);
@@ -23,15 +22,9 @@ for(let i = 0; i < numClouds; i++){
   let width = Math.random() * 30 + 30;
   let height = Math.random() * 15 + 20;
   let scaledWidth = 1 / depth * width;
-  console.log("cloud width: " + width);
-  console.log("depth: " + depth);
-  console.log("scaledWidth: " + scaledWidth);
   let maxPositionX = 100 - scaledWidth * 0.2;
   let minPositionX = -scaledWidth * 0.8;
-  console.log("maxPositionX(100 - scaledWidth * 0.2): " + maxPositionX);
-  console.log("minPositionX(-scaledWidth * 0.8): " + minPositionX);
   let positionRandom = Math.random();
-  console.log("positionRandom: " + positionRandom);
   randomTotal += positionRandom;
   let positionX = positionRandom * (maxPositionX - minPositionX) + minPositionX;
   let positionY = Math.random() * introductionSectionHeight;
@@ -46,10 +39,6 @@ for(let i = 0; i < numClouds; i++){
     height: height,
   })
 }
-console.log(" ");
-console.log("Average cloud position: " + (positionTotal / 15));
-console.log("Average random num: " + (randomTotal / 15));
-console.log(" ");
 }
 
 /*
@@ -61,13 +50,11 @@ console.log(" ");
 // code borrowed from: https://aaronsmith.online/use-javascript-to-get-original-dimensions-of-an-image-file/
 
 function getImgSize(imgSrc, callback) {
-  console.log("getImgSize");
   const newImg = new Image();
 
   newImg.onload = function() {
     const height = newImg.height;
     const width = newImg.width;
-    console.log("loaded image dimensions: " + width + "; " + height);
     callback({ width, height });
   };
 
@@ -142,7 +129,6 @@ function buildCthulhuLayers(cthulhuLayerHeight){
 */
 
 function buildContentLayers(){
-  console.log("intro height on building content layers: " + introductionSectionHeight);
   addParallaxLayer({
     element: underwaterSection,
     depth: 1,
