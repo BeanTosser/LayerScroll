@@ -10,6 +10,7 @@ window.addEventListener("load", () => {
     buildContentLayers();
     buildOceanBackgroundLayer(underwaterSectionHeight);
     buildCloudObjects();
+    buildOceanForegroundLayer(underwaterSectionHeight);
 })
 
 const buildCloudObjects = function() {
@@ -79,14 +80,16 @@ function buildOceanBackgroundLayer(sectionHeight){
     height: sectionHeight,
     shouldAdjustHeight: true,
     shouldAdjustPosition: true,
-    position: introductionSectionHeight
+    position: introductionSectionHeight,
+    debug: true
   });
 }
 function buildOceanForegroundLayer(sectionHeight) {
+  console.log("adding foreground layer");
   addParallaxLayer({
     image: "images/simpleWater.png",
     imageScale: 1,
-    depth: 0.9,
+    depth: 2,
     zIndex: 1000,
     opacity: 0.5,
     use3dTop: true,

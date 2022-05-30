@@ -167,7 +167,15 @@ const addParallaxLayer = function(parallaxLayerConfig){
      * ALSO NOTE there is no point in increasing the height if the layer is at depth 0 or shouldAdjustHeight is false 
      */ 
     //if(parallaxLayerConfig.shouldAdjustPosition){
-    // We might need to reference this css-calculated height later with additional calculations, so save it without the "calc()" function      
+    // We might need to reference this css-calculated height later with additional calculations, so save it without the "calc()" function   
+    if(parallaxLayerConfig.debug === true){
+      console.log("%cplc.depth: " + parallaxLayerConfig.depth, "font-weight: bold;");
+      console.log("%cbaseHeight: " + baseHeight, "font-weight: bold;");
+      console.log("%ctransformScale: " + transformScale, "font-weight: bold;");
+      console.log(" ")
+    } else {
+      console.log("%cdebug not set", "font-weight: bold;");
+    }
     newHeightStringWithoutCalc = (1 / parallaxLayerConfig.depth * baseHeight) + "vw + " + (transformScale - 1) / transformScale * 100 + "vh";
     newHeightString = "calc(" + newHeightStringWithoutCalc + ")";
     /*
@@ -211,11 +219,7 @@ const addParallaxLayer = function(parallaxLayerConfig){
      * setting the layer closer to/further from the viewer changes its apparent size, "pushing" the top and bottom out or "sucking" them in. 
      * This results in the layer being displaced from its position by half of the layer's size change multipliedby its transformScale
      */
-    // Need to adjust the position by layerHeight * (1)
-    let layerHeightInVw = newLayer.offsetHeight * 100 / window.innerWidth;
-    
-    let halvedHeightChange = (Math.abs(layerHeightInVw - layerHeightInVw / transformScale)) / 2;
-    adjustedPositionString = "calc(" + (parallaxLayerConfig.position || 0) + "vw - " + (50 * transformScale - 50) + "vh)";
+    adjustedPositionString = "calc(" + (parallaxLayerConfig.position || 0) + "vw"// - " + (50 * transformScale - 50) + "vh)";
   //} else {
     //adjustedPositionString = (parallaxLayerConfig.position || 0) + "vw";
   //}
@@ -258,7 +262,7 @@ const make3dLayer = function(layer, scale, depth, position, initialHeight, isTop
    */
   let adjustedHeight = 1000;
   //stretch the layer's width so that the edges don't recede from the sides of the window in the distance
-  let adjustedWidth = 1000;
+  let adjustedWidth = 1500;
 
   new3dLayer.style.height = adjustedHeight + "vw";
   new3dLayer.style.width = adjustedWidth + "vw";
@@ -270,7 +274,10 @@ const make3dLayer = function(layer, scale, depth, position, initialHeight, isTop
    */
   new3dLayer.style.transformOrigin = "center top";
   
+  console.log("%c3d layer scale: " + scale, "text-decoration: underline");
+  
   let leftDisplacement;
+  /*
   if(depth < 0){
     leftDisplacement = -adjustedWidth / 2 / scale - 50;
   } else if(depth > 0) {
@@ -278,6 +285,8 @@ const make3dLayer = function(layer, scale, depth, position, initialHeight, isTop
   } else {
     leftDisplacement = -adjustedWidth / 2 + 50;
   }
+  */
+  leftDisplacement = -(adjustedWidth / 2 * scale);
   new3dLayer.style.left = leftDisplacement + "vw";
  
   if(isTop){
